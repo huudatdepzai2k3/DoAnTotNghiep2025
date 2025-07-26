@@ -10,16 +10,20 @@
     <link rel="stylesheet" href="css/screen_control.css">
     <link rel="stylesheet" href="css/screen_giamsat.css">
     <link rel="stylesheet" href="css/screen_canhbao.css">
+    <link rel="stylesheet" href="css/screen_checktrangthai.css">
     <link rel="stylesheet" href="css/slidebar.css">
+    <link rel="stylesheet" href="css/screen_user.css">
 
     <script src = "socket.io/socket.io.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script src = "js/FC1_Common.js"></script>
     <script src="js/FC2_UserManager.js"></script>
     <script defer src="js/FC3_Quantity.js"></script>
-
+    <script defer src="js/FC4_Check.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+   
     <script>
-        var socket = io("http://127.0.0.1:5000") // IP tĩnh (hoặc IP động, hoặc localhost)
+        var socket = io("localhost:3000") // IP tĩnh (hoặc IP động, hoặc localhost)
     </script>
 
     <!-- ////////////// CHƯƠNG TRÌNH ĐĂNG NHẬP HỆ THỐNG //////////////  -->
@@ -32,25 +36,70 @@
             </div>
 
             <div id = "log_container" class="container">
-                <label for="uname"><b>Username</b></label>
-                <input id = "inputuser" type="text" placeholder="Enter Username" name="uname" required>
+                <label for="uname"><b>Tên đăng nhập hoặc số điện thoại</b></label>
+                <input id = "inputuser" type="text" placeholder="Nhập tên đăng nhập hoặc số điện thoại" name="uname" required>
 
-                <label for="psw"><b>Password</b></label>
-                <input id = "inputpass" type="password" placeholder="Enter Password" name="psw" required>
+                <label for="psw"><b>Mật khẩu</b></label>
+                <input id = "inputpass" type="password" placeholder="Nhập mật khẩu" name="psw" required>
 
-                <button id = "bttlogin1" type="button" onclick="login();">Login</button>
+                <button id = "bttlogin1" type="button" onclick="login();">Đăng nhập</button>
                 <label>
-                <input type="checkbox" checked="checked" name="remember"> Remember me
+                <input type="checkbox" checked="checked" name="remember"> Ghi nhớ đăng nhập
                 </label>
             </div>
 
             <div id = "login_container" class="container" style="background-color:#f1f1f1">
-                <button id = "bttcancle" type="button" onclick="document.getElementById('id01').style.display='none'; logout();" class="cancelbtn">Cancel</button>
-                <span id = "psw" class="psw">Forgot <a href="#">password?</a></span>
+                <button id = "bttcancle" type="button" onclick="document.getElementById('id01').style.display='none'; logout();" class="cancelbtn">Hủy</button>
+                <span id = "psw" class="psw" onclick="document.getElementById('id01').style.display='none'; document.getElementById('fogot_pwd').style.display='block';">Quên mật khẩu?</span>
+                <span id="create_acc">Chưa có tài khoản ? <span style="color: green; cursor: pointer;" onclick="document.getElementById('id01').style.display='none'; document.getElementById('create_account').style.display='block';">Tạo tài khoản mới</span></span>
             </div>
             </form>
         </div>
+        <!-- Phần quên mật khẩu -->
+        <div id="fogot_pwd" class="modal" style="display:none;">
+            <form id = "modal-content1" class="modal-content animate">
+                <div id = "img_container" class="imgcontainer">
+                    <span id = "closebtt" onclick="document.getElementById('id01').style.display='block'; document.getElementById('fogot_pwd').style.display='none';" class="close" title="Close Modal">×</span>
+                    <img decoding="async" id = "img_avatar" src="images/User/Users.jpg" alt="Avatar" class="avatar">
+                </div>
+                <center>
+                    <h2>Quên mật khẩu</h2>
+                    <p>Số điện thoại của bạn để nhận liên kết đặt lại mật khẩu</p>
+                    <label for="phone">Số điện thoại:</label>
+                    <input type="tel" id="phone" name="phone" required>
+                    <button type="button" onclick="pwd_reset();">Xác nhận</button>
+                </center>
+            </form>
+        </div>
+        <!-- Phần tạo tài khoản mới -->
+        <div id="create_account" class="modal" style="display:none;">
+            <form id = "modal-content1" class="modal-content animate">
+                <div id = "img_container" class="imgcontainer">
+                    <span id = "closebtt" onclick="document.getElementById('id01').style.display='block'; document.getElementById('create_account').style.display='none';" class="close" title="Close Modal">×</span>
+                    <img decoding="async" id = "img_avatar" src="images/User/Users.jpg" alt="Avatar" class="avatar">
+                </div>
+                <center>
+                    <h2>Tạo tài khoản mới</h2>
+                    <form id="create_account_form">
+                        <label for="new_phone">Số điện thoại:</label>
+                        <input type="tel" id="new_phone" name="new_phone" placeholder="Nhập số điện thoại" required></br>
+                        <label for="new_name">Tên đăng nhập:</label>
+                        <input type="text" id="new_name" name="new_name" placeholder="Nhập tên đăng nhập" required></br>
+                        <label for="new_password">Mật khẩu:</label>
+                        <input type="text" id="new_password" name="new_password" placeholder="Nhập mật khẩu"></br>
+                        <label for="new_role_acc">Vai trò:</label>
+                        <input id="new_role_acc" name="new_role_acc" placeholder="Chọn vai trò : " list="role"></input>
+                            <datalist id="role"> 
+                                <option value="Quản trị viên"></option>
+                                <option value="Người dùng" selected></option>
+                            </datalist>
+                        <button type="button" onclick="create_account();">Tạo tài khoản</button>
+                    </form>
+                </center>
+            </form>
+        </div>
     </div>
+
 </head>
 <!-- Phần thân của website -->
 <body>
@@ -64,16 +113,113 @@
         ">ĐĂNG XUẤT</button>
         <!--Nút chọn màn hình chính-->
         <button id="btt_Screen_Main" onclick="
-            fn_ScreenChange('Screen_Main','Screen_1','Screen_2');
+            fn_ScreenChange('Screen_Main','Screen_1','Screen_2', 'Screen_3', 'Screen_4');
         ">MÀN HÌNH ĐIỀU KIỂN</button>
         <!--Nút chọn màn hình 1-->
         <button id="btt_Screen_1" onclick="
-            fn_ScreenChange('Screen_1','Screen_Main','Screen_2');
+            fn_ScreenChange('Screen_1','Screen_Main','Screen_2', 'Screen_3', 'Screen_4');
         ">MÀN HÌNH GIÁM SÁT</button>
         <!--Nút chọn màn hình 2-->
         <button id="btt_Screen_2" onclick="
-            fn_ScreenChange('Screen_2','Screen_Main','Screen_1');
+            fn_ScreenChange('Screen_2','Screen_Main','Screen_1', 'Screen_3', 'Screen_4');
         ">MÀN HÌNH CẢNH BÁO</button>
+        <button id="btt_Screen_3" onclick="
+            fn_ScreenChange('Screen_3','Screen_Main','Screen_1', 'Screen_2', 'Screen_4');
+        ">MÀN HÌNH QUẢN LÍ ĐƠN HÀNG</button>
+        <button id="btt_Screen_4" style="display:none" onclick="
+            fn_ScreenChange('Screen_4','Screen_Main','Screen_1', 'Screen_2', 'Screen_3');
+        ">MÀN HÌNH QUẢN LÍ NGƯỜI DÙNG</button>
+    </div>
+
+<!-- //////////////Code cho màn hình 1////////////// -->
+    <div id = "Screen_1">
+        <p style="float: right;color:rgb(52, 51, 51);">Cập nhật lần cuối: <span id="last_update"></span></p></br>
+        <div class="dashboard">
+            <!-- Biểu đồ tỷ lệ chia chọn -->
+            <div class="card">
+                <div class="filter">
+                    <label>Biểu đồ tỷ lệ chia chọn hệ thống hôm nay</label>
+                </div>
+                <div class="chart-container">
+                    <canvas id="piechart" height="230px"></canvas>
+                </div>
+            </div>
+
+            <!-- Biểu đồ sản lượng đầu cấp -->
+            <div class="card">
+            <label>Biểu đồ sản lượng đầu cấp hôm nay</label>
+            <div class="chart-container">
+                <canvas id="columnchart"></canvas>
+            </div>
+            </div>
+
+            <!-- Lịch sử phân loại hàng -->
+            <div class="card" style="grid-column: span 2">
+            <div class="filter">
+                <label>Lịch sử phân loại hàng</label><br/>
+                <input id="check_day" type="radio" name="range" checked /> Theo ngày
+                <input id="check_month" type="radio" name="range" /> Theo tháng
+                <input id="check_year" type="radio" name="range" /> Theo năm
+                &nbsp; Từ <input id="start_date" type="date" />
+                Đến <input id="end_date" type="date" />
+            </div>
+            <div class="chart-container">
+                <canvas id="historychart" height="230px"></canvas>
+            </div>
+            </div>
+        </div>
+    </div>
+<!-- //////////////Code cho màn hình 2////////////// -->
+    <div id = "Screen_2">
+        <!--Table Cảnh báo Alarm-->
+        <div id = "div_table_Alarm">
+            <table id="table_Alarm" >
+                <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>ID cảnh báo</th>
+                    <th>Trạng thái</th>
+                    <th>nội dung cảnh báo</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+     <div id="Screen_3">
+        <div class="dashboard_2">
+            <center class="check_QR">
+                <label>Kiểm tra đơn hàng phân loại</label>
+                <input id="check_QR" type="text" placeholder="Nhập mã QR..." />
+                <button onclick="searchOrder(check_QR.value)">Tìm kiếm</button>
+                <p>Mã QR :<span id="qr_number"></span></p>
+                <p>Vị trí :<span id="qr_vitri"></span></p>
+                <p>Thời gian :<span id="qr_time"></span></p>
+                <p>Trạng thái đơn hàng :<span id="qr_trangthai"></span></p>
+            </center>
+            <center class="Export_Excel">
+                <label>Xuất danh sách phân loại</label>
+                <div>
+                    Từ <input id="start_date_check" type="date" />
+                    Đến <input id="end_date_check" type="date" />
+                    <button id="exportExcel" onclick="exportToExcel()">Xuất Excel</button>
+                </div>
+                <table id="resultTable">
+                    <thead>
+                        <tr>
+                            <th>Mã QR</th>
+                            <th>Vị trí</th>
+                            <th>Thời gian phân loại</th>
+                            <th>Trạng thái đơn hàng</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </center>
+
+        </div>
+    </div>
+    <div id="Screen_4">
+        <h1 class="hello"> Xin chào, Người dùng!</h1>
     </div>
 <!-- //////////////Code cho màn hình chính////////////// -->
     <div id = "Screen_Main">
@@ -119,62 +265,6 @@
         <img id = "slot_3" src="images/Symbol/slot.png">
         <img id = "slot_4" src="images/Symbol/slot.png">
         <img id = "slot_5" src="images/Symbol/slot.png">
-    </div>
-<!-- //////////////Code cho màn hình 1////////////// -->
-    <div id = "Screen_1">
-        <div class="dashboard">
-            <!-- Biểu đồ tỷ lệ chia chọn -->
-            <div class="card">
-            <div class="filter">
-                <label>Biểu đồ tỷ lệ chia chọn hệ thống</label>
-                <select>
-                <option>1 tuần gần nhất</option>
-                </select>
-            </div>
-            <div class="chart-container">
-                <canvas id="piechart" ></canvas>
-            </div>
-            </div>
-
-            <!-- Biểu đồ sản lượng đầu cấp -->
-            <div class="card">
-            <label>Biểu đồ sản lượng đầu cấp theo giờ</label>
-            <div class="chart-container">
-                <canvas id="columnchart"></canvas>
-            </div>
-            </div>
-
-            <!-- Lịch sử phân loại hàng -->
-            <div class="card" style="grid-column: span 2">
-            <div class="filter">
-                <label>Lịch sử phân loại hàng</label><br/>
-                <input type="radio" name="range" checked /> Theo ngày
-                <input type="radio" name="range" /> Theo tháng
-                <input type="radio" name="range" /> Theo năm
-                &nbsp; Từ <input type="date" />
-                Đến <input type="date" />
-            </div>
-            <div class="chart-container">
-                <canvas id="historychart"></canvas>
-            </div>
-            </div>
-        </div>
-    </div>
-<!-- //////////////Code cho màn hình 2////////////// -->
-    <div id = "Screen_2">
-        <!--Table Cảnh báo Alarm-->
-        <div id = "div_table_Alarm">
-            <table id="table_Alarm" >
-                <thead>
-                <tr>
-                    <th>Thời gian</th>
-                    <th>ID cảnh báo</th>
-                    <th>Trạng thái</th>
-                    <th>nội dung cảnh báo</th>
-                </tr>
-                </thead>
-            </table>
-        </div>
     </div>
 </body>
 </html>

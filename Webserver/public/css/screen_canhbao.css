@@ -1,35 +1,8 @@
-/*Màn hình 2*/
-#Screen_2 {
-    position: absolute;
-    left: 215px; top: 11px;
-    width: 1200px; height: 700px;
-    background-color: rgb(107,140,77);
-}
-
-/*//////////////Hiển thị dữ liệu bảng cảnh báo - Start/////////////////*/
-#div_table_Alarm{
-    position: absolute;
-    left: 150px;
-    top: 100px;
-    width: 900px;
-    height: 300px;
-    overflow-y: scroll;
-    background-color: rgb(255, 255, 255);
-}
-/*Table*/
-#table_Alarm {
-    position: absolute;
-    width:100%;
-    background-color: rgb(255, 0, 0);
-    color: rgb(255, 255, 255);
-}
-#table_Alarm tr{
-    cursor: pointer;
-}
-#table_Alarm tr:hover{background-color: rgb(255, 0, 0);}
-#table_Alarm   { overflow: auto; }
-#tabtable_Alarmle_01 thead th { position: sticky; top: 0;  }
-/* Just common table stuff. Really. */
-#table_Alarm  { border-collapse: collapse; width: 100%; }
-#table_Alarm th, td { padding: 8px 16px; }
-#table_Alarm th     { background:rgb(7, 10, 235); }
+#Screen_2{position:absolute;left:215px;top:11px;width:1200px;height:720px;background-color:rgb(107,140,77)}
+#div_table_Alarm{position:absolute;left:150px;top:100px;width:900px;height:300px;overflow-y:scroll;background-color:rgb(255,255,255)}
+#table_Alarm{position:absolute;width:100%;background-color:rgb(255,0,0);color:rgb(255,255,255)}
+#table_Alarm tr{cursor:pointer}
+#table_Alarm tr:hover{background-color:rgb(255,0,0)}
+#table_Alarm{overflow:auto}#tabtable_Alarmle_01 thead th{position:sticky;top:0}
+#table_Alarm{border-collapse:collapse;width:100%}#table_Alarm th,td{padding:8px 16px}
+#table_Alarm th{background:rgb(7,10,235)}

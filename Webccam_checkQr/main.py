@@ -6,9 +6,12 @@ import numpy as np
 import time
 import os
 import requests
+import datetime
+from ultralytics import YOLO
+import mysql.connector
 import snap7
 from snap7.util import set_int
-from PyQt5.QtCore import Qt, pyqtSignal, QThread
+from PyQt5.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QPushButton, QTextEdit, QFileDialog, QLineEdit)
 from PyQt5.QtGui import QPixmap, QImage, QFont
@@ -17,8 +20,16 @@ from PyQt5.QtGui import QPixmap, QImage, QFont
 PLC_IP = '192.168.0.1'
 RACK = 0
 SLOT = 1
-DB_NUMBER = 1
+DB_NUMBER = 7
 WEBSERVER_URL = 'http://127.0.0.1:5000'
+
+# Thông tin kết nối MySQL
+db_config = {
+    'host': '127.0.0.1',
+    'user': 'admin',
+    'password': 'datn2025',
+    'database': 'DATN2025'
+}
 
 # Các biến lưu trạng thái IP và URL hiện tại
 plc_ip_current = PLC_IP
@@ -31,6 +42,7 @@ stop_threads = False
 try:
     client.connect(plc_ip_current, RACK, SLOT)
     print("✅ Kết nối PLC lần đầu thành công.")
+
 except Exception as e:
     print(f"❌ Không thể kết nối PLC lần đầu: {e}")
 
@@ -48,20 +60,70 @@ def is_connected_webserver():
         return response.status_code == 200
     except:
         return False
+    
+## Kiểm tra kết nối đến Mysql
+def is_connected_mysql():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        return conn.is_connected()
+    except:
+        return False
+
+# Hàm ghi log QR code vào MySQL 
+def insert_qr_sorting(qr_code, address, tinhtrang, position):
+    conn = None
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        sorted_time = datetime.datetime.now()
+        sql = """
+        INSERT INTO qr_sorting_log (sorted_time, qr_code, address, tinhtrang, position)
+        VALUES (%s, %s, %s, %s, %s)
+        """
+        values = (sorted_time, qr_code, address, tinhtrang, position)
+        cursor.execute(sql, values)
+        conn.commit()
+        print("Đã ghi log QR:", qr_code, "vào địa chỉ:", address)
+    except mysql.connector.Error as err:
+        print("Lỗi MySQL:", err)
+    finally:
+        if conn and conn.is_connected():
+            cursor.close()
+            conn.close()
+
 
 # Lấy vị trí từ dữ liệu Excel và gửi vào PLC
-def get_position_from_file(qr_code):
+def get_position_from_file(qr_code, tinhtrang):
     global window
     try:
         if 'window' not in globals() or not hasattr(window, 'data_dict'):
             window.log_to_terminal("⚠️ Chưa tải dữ liệu Excel.")
-            return [243]
+            return
 
         # Kiểm tra mã QR có trong dữ liệu không
         if qr_code not in window.data_dict:
             window.log_to_terminal("⚠️ QR code không tồn tại trong dữ liệu Excel.")
-            return [243]
+            window.qr_label_2.setText("📦 Tình trạng hàng: Không xác định")
+            if is_connected(client):
+                try:
+                    data_push = bytearray(2)
+                    snap7.util.set_int(data_push, 0, 6)
+                    client.db_write(DB_NUMBER,0,data_push)
 
+                    data_push_1 = client.db_read(DB_NUMBER,2,1)
+                    snap7.util.set_bool(data_push_1, 0, 0, True)
+                    client.db_write(DB_NUMBER,2,data_push_1)
+                    time.sleep(0.5)
+                    snap7.util.set_bool(data_push_1, 0, 0, False)
+                    client.db_write(DB_NUMBER,2,data_push_1)
+                    window.log_to_terminal(f"📤 Gửi vị trí vào PLC: 6")
+                    insert_qr_sorting(qr_code, address, "Hàng không xác định", 6)
+                except Exception as e:
+                    window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vị trí vào PLC: {e}")
+            else:
+                window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vào PLC do mất kết nối với PLC")
+            return
+            
         address = str(window.data_dict[qr_code]).strip()
         window.pos_label.setText(f"📍 Vị trí: {address}")
         words1 = address.lower().split()
@@ -94,113 +156,59 @@ def get_position_from_file(qr_code):
                     if phrase1 in ' '.join(words3):
                         common_phrase.append(phrase1)
 
-                if common_phrase :        
-                    pos = int(file_pos)
+                if common_phrase :
+                    if tinhtrang == 'hangrach':  
+                        pos = 6
+                    else:      
+                        pos = int(file_pos)
                     window.log_to_terminal(f"✅ Vị trí phân loại: {pos}")
                     
                     # Gửi vị trí vào PLC nếu kết nối
                     if is_connected(client):
                         try:
-                            index = pos - 1  
-                            if 0 <= index <= 7:
-                                client.db_write(DB_NUMBER, index, 1)
-                                time.sleep(0.2)
-                                client.db_write(DB_NUMBER, index, 0)
+                            if 1 <= pos <= 6:
+                                data_push = bytearray(2)
+                                snap7.util.set_int(data_push, 0, pos)
+                                client.db_write(DB_NUMBER,0,data_push)
+
+                                data_push_1 = client.db_read(DB_NUMBER,2,1)
+                                snap7.util.set_bool(data_push_1, 0, 0, True)
+                                client.db_write(DB_NUMBER,2,data_push_1)
+                                time.sleep(0.5)
+                                snap7.util.set_bool(data_push_1, 0, 0, False)
+                                client.db_write(DB_NUMBER,2,data_push_1)
                                 window.log_to_terminal(f"📤 Gửi vị trí vào PLC: {pos}")
+                                insert_qr_sorting(qr_code, address, tinhtrang, pos)
                             else:
                                 window.log_to_terminal(f"⚠️ Vị trí {pos} không hợp lệ")
-                        except Exception as e:
-                            window.log_to_terminal(f"❌ Lỗi khi gửi vào PLC: {e}")
- 
-
-                            window.log_to_terminal(f"📤 Gửi vị trí vào PLC: {pos}")
                         except Exception as e:
                             window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vị trí vào PLC: {e}")
                     else : 
                         window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vào PLC do mất kết nối với PLC")
-
-                    return [pos]
         else :
             window.log_to_terminal(f"❌ Địa chỉ nằm ngoài phạm vi phân loại")
-        window.log_to_terminal("⚠️ Không tìm thấy dữ liệu vị trí hệ thống phù hợp.")
-        return [243]
-
     except Exception as e:
         window.log_to_terminal(f"❌ Lỗi đọc file: {e}")
-        return [234]
-
-
-# Lớp xử lý quét QR Code trong luồng riêng
-class QRScannerThread(QThread):
-    frame_updated = pyqtSignal(np.ndarray)  # Tín hiệu cập nhật ảnh
-    qr_code_detected = pyqtSignal(str)  # Tín hiệu phát hiện mã QR
-
-    def __init__(self):
-        super().__init__()
-        self.last_detection_time = time.time()
-        self.last_qr_code = ""
-
-    def run(self):
-        global stop_threads
-
-        # Khởi tạo camera
-        cap = cv2.VideoCapture(0)
-        if not cap.isOpened():
-            window.log_to_terminal("❌ Không thể mở camera!")
-            blank = np.zeros((480, 640, 3), dtype=np.uint8)
-            self.frame_updated.emit(blank)
-            return
-
-        cap.set(3, 640)  # Đặt chiều rộng của video
-        cap.set(4, 480)  # Đặt chiều cao của video
-
-        while not stop_threads:
-            ret, frame = cap.read()
-            if not ret:
-                time.sleep(0.1)
-                continue
-
-            # Chuyển đổi ảnh sang xám để quét QR code
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            qrcodes = pyzbar.decode(gray)
-
-            # Kiểm tra và vẽ các mã QR lên ảnh
-            for qrcode in qrcodes:
-                (x, y, w, h) = qrcode.rect
-                if w > 0 and h > 0:
-                    data = qrcode.data.decode('utf-8')
-                    # Chỉ cập nhật mã QR mới sau mỗi 0.5s
-                    if time.time() - self.last_detection_time > 0.5 and data != self.last_qr_code:
-                        self.last_qr_code = data
-                        window.log_to_terminal(f"📷 Mã QR mới: {data}")
-                        result = get_position_from_file(data)
-                        if isinstance(result, list):
-                            self.qr_code_detected.emit(data)
-                        self.last_detection_time = time.time()
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
-                    cv2.putText(frame, f"{data}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 2)
-
-            self.frame_updated.emit(frame)
-
-        cap.release()
-
 
 # Lớp theo dõi trạng thái kết nối PLC và Webserver
 class ConnectionMonitorThread(QThread):
-    status_updated = pyqtSignal(bool, bool)
+    status_updated = pyqtSignal(bool, bool, bool)
     last_plc_status = None
     last_web_status = None
+    last_mysql_status = None
 
     def run(self):
         global stop_threads
         while not stop_threads:
             plc_status = is_connected(client)  # Kiểm tra kết nối PLC
             web_status = is_connected_webserver()  # Kiểm tra kết nối Webserver
-            if plc_status != self.last_plc_status or web_status != self.last_web_status:
-                self.status_updated.emit(plc_status, web_status)  # Cập nhật trạng thái kết nối
+            mysql_status = is_connected_mysql() # Kiểm tra kết nối MySQL
+            if plc_status != self.last_plc_status or web_status != self.last_web_status or mysql_status != self.last_mysql_status:
+                self.status_updated.emit(plc_status, web_status, mysql_status)  # Cập nhật trạng thái kết nối
                 self.last_plc_status = plc_status
                 self.last_web_status = web_status
-            time.sleep(3)
+                self.last_mysql_status = mysql_status
+            time.sleep(5)
 
             if not plc_status:
                 window.log_to_terminal("🔄 Mất kết nối PLC. Thử kết nối lại...")
@@ -211,6 +219,14 @@ class ConnectionMonitorThread(QThread):
                 except Exception as e:
                     window.log_to_terminal(f"❌ Lỗi kết nối lại PLC: {e}")
 
+            if not mysql_status:
+                window.log_to_terminal("🔄 Mất kết nối MySQL. Thử kết nối lại...")
+                try:
+                    conn = mysql.connector.connect(**db_config)
+                    if conn.is_connected():
+                        window.log_to_terminal("✅ Đã kết nối lại MySQL thành công.")
+                except Exception as e:
+                    window.log_to_terminal(f"❌ Lỗi kết nối lại MySQL: {e}")
 
 # Lớp giao diện chính ứng dụng
 class DemoApp(QWidget):
@@ -219,6 +235,20 @@ class DemoApp(QWidget):
         self.setWindowTitle("Giao diện đầu vào")
         self.setFixedSize(1800, 600)
         self.setGeometry(100, 100, 1000, 300)
+
+        self.capture = cv2.VideoCapture(0)
+        self.capture.set(3, 640)
+        self.capture.set(4, 480)
+         
+        self.yolo_model = YOLO("yolov8n.pt")  # Đường dẫn tới model đã huấn luyện
+
+        self.last_qr_code = ""
+        self.last_detection_time = time.time()
+
+        # Tạo QTimer để xử lý frame định kỳ
+        self.camera_timer = QTimer()
+        self.camera_timer.timeout.connect(self.read_frame)
+        self.camera_timer.start(30)  # Mỗi 30ms ~ 33 FPS
 
         # Thiết lập giao diện
         main_layout = QHBoxLayout()
@@ -245,14 +275,18 @@ class DemoApp(QWidget):
         # Hiển thị thông tin về mã QR và vị trí
         self.qr_label = QLabel("📦 Mã QR: (chưa có)")
         self.pos_label = QLabel("📍 Vị trí: (chưa có)")
+        self.qr_label_2 = QLabel("📦 Tình trạng hàng: (chưa có)")
         self.plc_status_label = QLabel("🔌 PLC: Đang kiểm tra...")
         self.webserver_status_label = QLabel("🔌 Webserver: Đang kiểm tra...")
+        self.mySQL_status_label = QLabel("🔌 MySQL: Đang kiểm tra...")
 
         # Đèn báo trạng thái kết nối
         self.plc_status_led = QLabel()
         self.plc_status_led.setFixedSize(20, 20)
         self.webserver_status_led = QLabel()
         self.webserver_status_led.setFixedSize(20, 20)
+        self.mySQL_status_led = QLabel()
+        self.mySQL_status_led.setFixedSize(20, 20)
 
         # Các layout cho PLC và Webserver
         plc_layout = QHBoxLayout()
@@ -261,6 +295,9 @@ class DemoApp(QWidget):
         web_layout = QHBoxLayout()
         web_layout.addWidget(self.webserver_status_label)
         web_layout.addWidget(self.webserver_status_led)
+        mySQL_layout = QHBoxLayout()
+        mySQL_layout.addWidget(self.mySQL_status_label)
+        mySQL_layout.addWidget(self.mySQL_status_led)
 
         self.ip_input = QLineEdit()
         self.ip_input.setText(PLC_IP)
@@ -274,8 +311,10 @@ class DemoApp(QWidget):
         right_layout.addWidget(QLabel("📤 Thông tin Output:"))
         right_layout.addWidget(self.qr_label)
         right_layout.addWidget(self.pos_label)
+        right_layout.addWidget(self.qr_label_2)
         right_layout.addLayout(plc_layout)
         right_layout.addLayout(web_layout)
+        right_layout.addLayout(mySQL_layout)
         right_layout.addWidget(QLabel("🌐 URL Webserver:"))
         right_layout.addWidget(self.url_input)
         right_layout.addWidget(QLabel("🌐 IP PLC:"))
@@ -304,21 +343,25 @@ class DemoApp(QWidget):
         self.data_dict = {}
         self.address_to_pos_dict = {}
 
-        # Khởi tạo các thread
-        self.qr_scanner_thread = QRScannerThread()
-        self.qr_scanner_thread.frame_updated.connect(self.update_image)
-        self.qr_scanner_thread.qr_code_detected.connect(self.update_qr_info)
-        self.qr_scanner_thread.start()
-
+        # # Khởi tạo các thread
         self.connection_thread = ConnectionMonitorThread()
         self.connection_thread.status_updated.connect(self.update_status)
         self.connection_thread.start()
 
     # Hàm log thông báo vào terminal
     def log_to_terminal(self, msg):
+        self.terminal_output.append(msg)
         self.terminal_output.moveCursor(self.terminal_output.textCursor().End)
-        self.terminal_output.insertPlainText(msg + '\n')
-        self.terminal_output.moveCursor(self.terminal_output.textCursor().End)
+
+        max_lines = 200
+        doc = self.terminal_output.document()
+        if doc.blockCount() > max_lines:
+            cursor = self.terminal_output.textCursor()
+            cursor.movePosition(cursor.Start)
+            for _ in range(doc.blockCount() - max_lines):
+                cursor.select(cursor.BlockUnderCursor)
+                cursor.removeSelectedText()
+                cursor.deleteChar()
 
     # Hàm tải dữ liệu từ file Excel
     def load_excel(self):
@@ -347,6 +390,51 @@ class DemoApp(QWidget):
                 self.excel_display.setText(f"Lỗi: {e}")
                 self.log_to_terminal(f"❌ Lỗi tải Excel: {e}")
 
+    def read_frame(self):
+        ret, frame = self.capture.read()
+        if not ret:
+            return
+        
+        # ---------- YOLOv8 Object Detection ----------
+        results = self.yolo_model(frame)[0]
+        for box in results.boxes:
+            cls_id = int(box.cls[0])
+            conf = float(box.conf[0])
+            tinhtrang = self.yolo_model.names[cls_id]
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+
+            color = (0, 255, 0) if tinhtrang != 'hangrach' else (0, 0, 255)  # Đỏ nếu hỏng
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+            cv2.putText(frame, f"{tinhtrang} {conf:.2f}", (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+        # Quét QR code
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        qrcodes = pyzbar.decode(gray)
+
+        for qrcode in qrcodes:
+            (x, y, w, h) = qrcode.rect
+            if w > 0 and h > 0:
+                data = qrcode.data.decode('utf-8')
+                # Mỗi 0.5s xử lý mã QR mới
+                if time.time() - self.last_detection_time > 0.5 and data != self.last_qr_code:
+                    self.last_qr_code = data
+                    self.last_detection_time = time.time()
+                    self.log_to_terminal(f"📷 Mã QR mới: {data}")
+                    self.qr_label.setText(f"📦 Mã QR: {data}")
+                    if tinhtrang == 'hangrach':
+                        self.qr_label_2.setText("📦 Tình trạng hàng: Rách")
+                    else:
+                        self.qr_label_2.setText("📦 Tình trạng hàng: Bình thường")
+
+                    get_position_from_file(data, tinhtrang)
+
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
+                cv2.putText(frame, f"{data}", (x, y - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 2)
+
+        self.update_image(frame)
+
     # Cập nhật hình ảnh từ camera
     def update_image(self, frame):
         rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -359,12 +447,15 @@ class DemoApp(QWidget):
     def update_qr_info(self, qr_code):
         self.qr_label.setText(f"📦 Mã QR: {qr_code}")
 
-    # Cập nhật trạng thái kết nối PLC và Webserver
-    def update_status(self, plc_connected, web_connected):
+    # Cập nhật trạng thái kết nối PLC, Webserver, MySQL
+    def update_status(self, plc_connected, web_connected, mysql_connected):
         self.plc_status_label.setText("🔌 PLC: Đã kết nối" if plc_connected else "🔌 PLC: Mất kết nối")
         self.plc_status_led.setStyleSheet("background-color: green;" if plc_connected else "background-color: red;")
         self.webserver_status_label.setText("🔌 Webserver: Đã kết nối" if web_connected else "🔌 Webserver: Mất kết nối")
         self.webserver_status_led.setStyleSheet("background-color: green;" if web_connected else "background-color: red;")
+        self.mySQL_status_label.setText("🔌 MySQL: Đã kết nối" if mysql_connected else "🔌 MySQL: Mất kết nối")
+        self.mySQL_status_led.setStyleSheet("background-color: green;" if mysql_connected else "background-color: red;")
+
 
     # Cập nhật lại IP và URL cho PLC và Webserver
     def update_plc_webserver_address(self):
@@ -382,12 +473,13 @@ class DemoApp(QWidget):
     def closeEvent(self, event):
         global stop_threads
         stop_threads = True
-        self.qr_scanner_thread.quit()
         self.connection_thread.quit()
-        self.qr_scanner_thread.wait()
         self.connection_thread.wait()
-        event.accept()
 
+        self.camera_timer.stop()
+        if self.capture.isOpened():
+            self.capture.release()
+        event.accept()
 
 # Chạy ứng dụng
 if __name__ == "__main__":
