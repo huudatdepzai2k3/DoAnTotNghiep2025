@@ -247,6 +247,7 @@ class DemoApp(QWidget):
         self.capture = cv2.VideoCapture(0)
         self.capture.set(3, 640)
         self.capture.set(4, 480)
+        self.camera_connected = self.capture.isOpened()
          
         self.yolo_model = YOLO("yolov8n.pt")  # Đường dẫn tới model đã huấn luyện
 
@@ -355,6 +356,32 @@ class DemoApp(QWidget):
         self.connection_thread = ConnectionMonitorThread()
         self.connection_thread.status_updated.connect(self.update_status)
         self.connection_thread.start()
+    
+    # Kiểm tra kết nối camera
+    def check_camera_connection(self):
+        last_camera_connected = self.camera_connected
+        if not self.capture.isOpened():
+            self.log_to_terminal("🔄 Mất kết nối camera. Đang thử kết nối lại...")
+            self.capture.release()
+            self.capture = cv2.VideoCapture(0)
+            self.capture.set(3, 640)
+            self.capture.set(4, 480)
+            if self.capture.isOpened():
+                self.log_to_terminal("✅ Đã kết nối lại camera thành công.")
+                self.camera_connected = True
+            else:
+                self.log_to_terminal("❌ Không thể kết nối lại camera.")
+                self.camera_connected = False
+
+        if last_camera_connected != self.camera_connected:
+            if self.camera_connected:
+                data_push_2 = client.db_read(DB_NUMBER,2,1)
+                snap7.util.set_bool(data_push_2, 0, 1, True)
+                client.db_write(DB_NUMBER,2,data_push_2)
+            else:
+                data_push_2 = client.db_read(DB_NUMBER,2,1)
+                snap7.util.set_bool(data_push_2, 0, 1, False)
+                client.db_write(DB_NUMBER,2,data_push_2)
 
     # Hàm log thông báo vào terminal
     def log_to_terminal(self, msg):
@@ -399,10 +426,16 @@ class DemoApp(QWidget):
                 self.log_to_terminal(f"❌ Lỗi tải Excel: {e}")
 
     def read_frame(self):
-        ret, frame = self.capture.read()
-        if not ret:
+        if not self.capture.isOpened():
+            self.check_camera_connection()
             return
-        
+
+        ret, frame = self.capture.read()
+        if not ret or frame is None:
+            self.log_to_terminal("⚠️ Không đọc được frame từ camera.")
+            self.check_camera_connection()
+            return
+            
         # ---------- YOLOv8 Object Detection ----------
         results = self.yolo_model(frame)[0]
         for box in results.boxes:
