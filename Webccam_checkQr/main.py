@@ -7,13 +7,12 @@ import time
 import os
 import requests
 import datetime
+import pymysql
 from ultralytics import YOLO
-import mysql.connector
 import snap7
 from snap7.util import set_int
 from PyQt5.QtCore import Qt, pyqtSignal, QThread, QTimer
-from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
-                             QLabel, QPushButton, QTextEdit, QFileDialog, QLineEdit)
+from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,QLabel, QPushButton, QTextEdit, QFileDialog, QLineEdit)
 from PyQt5.QtGui import QPixmap, QImage, QFont
 
 # Định nghĩa thông số kết nối PLC và Webserver
@@ -25,10 +24,13 @@ WEBSERVER_URL = 'http://127.0.0.1:5000'
 
 # Thông tin kết nối MySQL
 db_config = {
-    'host': '127.0.0.1',
-    'user': 'admin',
-    'password': 'datn2025',
-    'database': 'DATN2025'
+    "host": "localhost",
+    "user": "admin",
+    "password": "123456",
+    "database": "sql_plc",
+    "port": 3306,
+    "charset": "utf8mb4",      
+    "cursorclass": pymysql.cursors.DictCursor
 }
 
 # Các biến lưu trạng thái IP và URL hiện tại
@@ -42,9 +44,17 @@ stop_threads = False
 try:
     client.connect(plc_ip_current, RACK, SLOT)
     print("✅ Kết nối PLC lần đầu thành công.")
-
 except Exception as e:
     print(f"❌ Không thể kết nối PLC lần đầu: {e}")
+
+try:
+    conn = pymysql.connect(**db_config)
+    if conn.open:
+        print("✅ Đã kết nối lần đầu thành công tới MySQL bằng PyMySQL.")
+    else:
+        print("❌ Không thể kết nối MySQL.")
+except pymysql.MySQLError as e:
+    print("❌ Lỗi kết nối MySQL:", e)
 
 # Kiểm tra kết nối đến PLC
 def is_connected(client):
@@ -64,33 +74,63 @@ def is_connected_webserver():
 ## Kiểm tra kết nối đến Mysql
 def is_connected_mysql():
     try:
-        conn = mysql.connector.connect(**db_config)
-        return conn.is_connected()
-    except:
+        conn = pymysql.connect(**db_config)
+        if conn.open:
+            return True
+        else:
+            return False
+    except pymysql.MySQLError as e:
         return False
 
 # Hàm ghi log QR code vào MySQL 
 def insert_qr_sorting(qr_code, address, tinhtrang, position):
     conn = None
+    cursor = None
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = pymysql.connect(**db_config)
         cursor = conn.cursor()
         sorted_time = datetime.datetime.now()
         sql = """
-        INSERT INTO qr_sorting_log (sorted_time, qr_code, address, tinhtrang, position)
-        VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO qr_sorted_log (sorted_time, qr_code, address, tinhtrang, position)
+            VALUES (%s, %s, %s, %s, %s)
         """
         values = (sorted_time, qr_code, address, tinhtrang, position)
         cursor.execute(sql, values)
         conn.commit()
-        print("Đã ghi log QR:", qr_code, "vào địa chỉ:", address)
-    except mysql.connector.Error as err:
-        print("Lỗi MySQL:", err)
+
+        window.log_to_terminal(f"✅ Ghi thành công QR: {qr_code} vào MySQL lúc {sorted_time}")
+    except pymysql.MySQLError as err:
+        window.log_to_terminal("❌ Lỗi ghi MySQL:", err)
+    except Exception as ex:
+        window.log_to_terminal("❌ Lỗi khác:", ex)
     finally:
-        if conn and conn.is_connected():
+        if cursor:
             cursor.close()
+        if conn:
             conn.close()
 
+def send_data_to_plc_SQL(qr_code, address, tinhtrang, position):
+    if is_connected(client):
+        try:
+            if 1 <= position <= 6:
+                data_push = bytearray(2)
+                snap7.util.set_int(data_push, 0, position)
+                client.db_write(DB_NUMBER,0,data_push)
+
+                data_push_1 = client.db_read(DB_NUMBER,2,1)
+                snap7.util.set_bool(data_push_1, 0, 0, True)
+                client.db_write(DB_NUMBER,2,data_push_1)
+                time.sleep(0.5)
+                snap7.util.set_bool(data_push_1, 0, 0, False)
+                client.db_write(DB_NUMBER,2,data_push_1)
+                window.log_to_terminal(f"📤 Gửi vị trí vào PLC: {position}")
+                insert_qr_sorting(qr_code, address, tinhtrang, position)
+            else:
+                window.log_to_terminal(f"⚠️ Vị trí {position} không hợp lệ")
+        except Exception as e:
+            window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vị trí vào PLC: {e}")
+    else:
+        window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vào PLC do mất kết nối với PLC")
 
 # Lấy vị trí từ dữ liệu Excel và gửi vào PLC
 def get_position_from_file(qr_code, tinhtrang):
@@ -100,93 +140,59 @@ def get_position_from_file(qr_code, tinhtrang):
             window.log_to_terminal("⚠️ Chưa tải dữ liệu Excel.")
             return
 
-        # Kiểm tra mã QR có trong dữ liệu không
+        # Kiểm tra mã QR có trong dữ liệu
         if qr_code not in window.data_dict:
             window.log_to_terminal("⚠️ QR code không tồn tại trong dữ liệu Excel.")
             window.qr_label_2.setText("📦 Tình trạng hàng: Không xác định")
-            if is_connected(client):
-                try:
-                    data_push = bytearray(2)
-                    snap7.util.set_int(data_push, 0, 6)
-                    client.db_write(DB_NUMBER,0,data_push)
-
-                    data_push_1 = client.db_read(DB_NUMBER,2,1)
-                    snap7.util.set_bool(data_push_1, 0, 0, True)
-                    client.db_write(DB_NUMBER,2,data_push_1)
-                    time.sleep(0.5)
-                    snap7.util.set_bool(data_push_1, 0, 0, False)
-                    client.db_write(DB_NUMBER,2,data_push_1)
-                    window.log_to_terminal(f"📤 Gửi vị trí vào PLC: 6")
-                    insert_qr_sorting(qr_code, address, "Hàng không xác định", 6)
-                except Exception as e:
-                    window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vị trí vào PLC: {e}")
-            else:
-                window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vào PLC do mất kết nối với PLC")
+            send_data_to_plc_SQL(qr_code, "Không xác định", "Không xác định", 6)
             return
-            
-        address = str(window.data_dict[qr_code]).strip()
-        window.pos_label.setText(f"📍 Vị trí: {address}")
-        words1 = address.lower().split()
-        # Tìm vị trí phù hợp từ dữ liệu vị trí
-        max_len_max = 0
-        for file_address, file_pos in window.address_to_pos_dict.items():
-            words2 = file_address.lower().split()
-            max_len = 0
-            # Kiểm tra sự trùng lặp giữa các cụm từ liên tiếp
-            n, m = len(words1), len(words2)
-            dp = [[0] * (m + 1) for _ in range(n + 1)]
-          
-            for i in range(n):
-                for j in range(m):
-                    if words1[i] == words2[j]:
-                        dp[i + 1][j + 1] = dp[i][j] + 1
-                        max_len = max(max_len, dp[i + 1][j + 1])
-                    else:
-                        dp[i + 1][j + 1] = 0
+        else :    
+            address = str(window.data_dict[qr_code]).strip()
+            window.pos_label.setText(f"📍 Vị trí: {address}")
+            words1 = address.lower().split()
 
-            if max_len_max <= max_len :
-                max_len_max = max_len
-        
-        if max_len_max > 0:
+           # Tìm file_address có cụm từ chung dài nhất
+            max_len_max = 0
+            best_match = None
             for file_address, file_pos in window.address_to_pos_dict.items():
-                words3 = file_address.lower().split()
-                common_phrase = []
-                for i in range(len(words1) - 1):
-                    phrase1 = ' '.join(words1[i:i+max_len_max]) 
-                    if phrase1 in ' '.join(words3):
-                        common_phrase.append(phrase1)
+                words2 = file_address.lower().split()
+                n, m = len(words1), len(words2)
+                dp = [[0] * (m + 1) for _ in range(n + 1)]
+                max_len = 0
 
-                if common_phrase :
-                    if tinhtrang == 'hangrach':  
+                for i in range(n):
+                    for j in range(m):
+                        if words1[i] == words2[j]:
+                            dp[i + 1][j + 1] = dp[i][j] + 1
+                            if dp[i + 1][j + 1] > max_len:
+                                max_len = dp[i + 1][j + 1]
+                        else:
+                            dp[i + 1][j + 1] = 0
+
+                if max_len > max_len_max:
+                    max_len_max = max_len
+                    best_match = (file_address, file_pos)
+
+            # Nếu tìm được cụm từ chung phù hợp
+            if best_match and max_len_max > 0:
+                file_address, file_pos = best_match
+                words3 = file_address.lower().split()
+                common_phrases = [
+                    ' '.join(words1[i:i+max_len_max])
+                    for i in range(len(words1) - max_len_max + 1)
+                    if ' '.join(words1[i:i+max_len_max]) in ' '.join(words3)
+                ]
+
+                if common_phrases:
+                    if tinhtrang == 'hàng rách':
                         pos = 6
-                    else:      
+                    else:
                         pos = int(file_pos)
                     window.log_to_terminal(f"✅ Vị trí phân loại: {pos}")
-                    
-                    # Gửi vị trí vào PLC nếu kết nối
-                    if is_connected(client):
-                        try:
-                            if 1 <= pos <= 6:
-                                data_push = bytearray(2)
-                                snap7.util.set_int(data_push, 0, pos)
-                                client.db_write(DB_NUMBER,0,data_push)
-
-                                data_push_1 = client.db_read(DB_NUMBER,2,1)
-                                snap7.util.set_bool(data_push_1, 0, 0, True)
-                                client.db_write(DB_NUMBER,2,data_push_1)
-                                time.sleep(0.5)
-                                snap7.util.set_bool(data_push_1, 0, 0, False)
-                                client.db_write(DB_NUMBER,2,data_push_1)
-                                window.log_to_terminal(f"📤 Gửi vị trí vào PLC: {pos}")
-                                insert_qr_sorting(qr_code, address, tinhtrang, pos)
-                            else:
-                                window.log_to_terminal(f"⚠️ Vị trí {pos} không hợp lệ")
-                        except Exception as e:
-                            window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vị trí vào PLC: {e}")
-                    else : 
-                        window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vào PLC do mất kết nối với PLC")
-        else :
-            window.log_to_terminal(f"❌ Địa chỉ nằm ngoài phạm vi phân loại")
+                    send_data_to_plc_SQL(qr_code, address, tinhtrang, pos)
+            else:
+                window.log_to_terminal("⚠️ Không tìm thấy vị trí phù hợp.")
+                        
     except Exception as e:
         window.log_to_terminal(f"❌ Lỗi đọc file: {e}")
 
@@ -221,10 +227,12 @@ class ConnectionMonitorThread(QThread):
 
             if not mysql_status:
                 window.log_to_terminal("🔄 Mất kết nối MySQL. Thử kết nối lại...")
-                try:
-                    conn = mysql.connector.connect(**db_config)
-                    if conn.is_connected():
+                try :
+                    conn = pymysql.connect(**db_config)
+                    if conn.open:
                         window.log_to_terminal("✅ Đã kết nối lại MySQL thành công.")
+                    else:
+                        window.log_to_terminal("❌ Không thể kết nối lại MySQL.")
                 except Exception as e:
                     window.log_to_terminal(f"❌ Lỗi kết nối lại MySQL: {e}")
 
@@ -403,7 +411,7 @@ class DemoApp(QWidget):
             tinhtrang = self.yolo_model.names[cls_id]
             x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-            color = (0, 255, 0) if tinhtrang != 'hangrach' else (0, 0, 255)  # Đỏ nếu hỏng
+            color = (0, 255, 0) if tinhtrang != 'hàng rách' else (0, 0, 255)  # Đỏ nếu hỏng
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
             cv2.putText(frame, f"{tinhtrang} {conf:.2f}", (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
@@ -422,10 +430,11 @@ class DemoApp(QWidget):
                     self.last_detection_time = time.time()
                     self.log_to_terminal(f"📷 Mã QR mới: {data}")
                     self.qr_label.setText(f"📦 Mã QR: {data}")
-                    if tinhtrang == 'hangrach':
+                    if tinhtrang == 'hàng rách':
                         self.qr_label_2.setText("📦 Tình trạng hàng: Rách")
                     else:
                         self.qr_label_2.setText("📦 Tình trạng hàng: Bình thường")
+                        tinhtrang = 'bình thường'
 
                     get_position_from_file(data, tinhtrang)
 

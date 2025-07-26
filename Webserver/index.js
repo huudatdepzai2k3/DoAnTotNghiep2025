@@ -52,15 +52,16 @@ function fn_Data_Write(tag,data){
 ///////////////////////////ĐỊNH NGHĨA TAG////////////////////////
 
 // === Đọc dữ liệu hmi ===
-var state_motor = "state_motor";
+var sql_insert_Trigger = 'sql_insert_Trigger';
+var state_run = "state_run";
 var state_auto = "state_auto";
+var state_motor = "state_motor";
 var state_cam_bien_1 = "state_cam_bien_1";
 var state_cam_bien_2 = "state_cam_bien_2";
 var state_cam_bien_3 = "state_cam_bien_3";
 var state_cam_bien_4 = "state_cam_bien_4";
 var state_cam_bien_5 = "state_cam_bien_5";
 var state_cam_bien_6 = "state_cam_bien_6";
-
 var state_xi_lanh_1 = "state_xi_lanh_1";
 var state_xi_lanh_2 = "state_xi_lanh_2";
 var state_xi_lanh_3 = "state_xi_lanh_3";
@@ -82,6 +83,8 @@ const TagList = tagBuilder
 .read(state_xi_lanh_5)
 .read(state_motor)
 .read(state_auto)
+.read(state_run)
+.read(sql_insert_Trigger)
 .get();
 
 ///////////////////////////QUÉT DỮ LIỆU////////////////////////
@@ -95,6 +98,65 @@ function fn_read_data_scan(){
     fn_tagRead();   // Đọc giá trị tag
 }
 
+// Ghi dữ liệu vào SQL
+var sqlins_done = false; // Biến báo đã ghi xong dữ liệu
+function fn_sql_insert(){
+    var trigger = tagArr[0];  // Trigger đọc về từ PLC
+    var sqltable_Name = "plc_data";
+    // Lấy thời gian hiện tại
+    var tzoffset = (new Date()).getTimezoneOffset() * 60000; //Vùng Việt Nam (GMT7+)
+    var temp_datenow = new Date();
+    var timeNow = (new Date(temp_datenow - tzoffset)).toISOString().slice(0, -1).replace("T"," ");
+    var timeNow_toSQL = "'" + timeNow + "',";
+
+    // Dữ liệu đọc lên từ các tag
+    var data_run = "'" + tagArr[1] + "',";
+    var data_auto = "'" + tagArr[2] + "',";
+    var data_motor = "'" + tagArr[3] + "',";
+    var data_cam_bien_1 = "'" + tagArr[4] + "',";
+    var data_cam_bien_2 = "'" + tagArr[5] + "',";
+    var data_cam_bien_3 = "'" + tagArr[6] + "',";
+    var data_cam_bien_4 = "'" + tagArr[7] + "',";
+    var data_cam_bien_5 = "'" + tagArr[8] + "',";
+    var data_cam_bien_6 = "'" + tagArr[9] + "',";
+    var data_xi_lanh_1 = "'" + tagArr[10] + "',";
+    var data_xi_lanh_2 = "'" + tagArr[11] + "',";
+    var data_xi_lanh_3 = "'" + tagArr[12] + "',";
+    var data_xi_lanh_4 = "'" + tagArr[13] + "',";
+    var data_xi_lanh_5 = "'" + tagArr[14] + "',";
+    // Ghi dữ liệu vào SQL
+    if (trigger == true & trigger != sqlins_done)
+    {
+        var sqlins1 = "INSERT INTO "
+                    + sqltable_Name
+                    + " (date_time, data_auto, data_motor, data_cam_bien_1, data_cam_bien_2, data_cam_bien_3, data_cam_bien_4, data_cam_bien_5, data_cam_bien_6, data_xi_lanh_1, data_xi_lanh_2, data_xi_lanh_3, data_xi_lanh_4, data_xi_lanh_5) VALUES (";
+        var sqlins2 = timeNow_toSQL
+                    + data_auto
+                    + data_motor
+                    + data_cam_bien_1
+                    + data_cam_bien_2
+                    + data_cam_bien_3
+                    + data_cam_bien_4
+                    + data_cam_bien_5
+                    + data_cam_bien_6
+                    + data_xi_lanh_1
+                    + data_xi_lanh_2
+                    + data_xi_lanh_3
+                    + data_xi_lanh_4
+                    + data_xi_lanh_5
+                    ;
+        var sqlins = sqlins1 + sqlins2 + ");";
+        // Thực hiện ghi dữ liệu vào SQL
+        sqlcon.query(sqlins, function (err, result) {
+            if (err) {
+                console.log(err);
+             } else {
+                console.log("SQL - Ghi dữ liệu thành công");
+              }
+            });
+    }
+    sqlins_done = trigger;
+}
 
 // Khai báo tag output
 var button_state = "state_button"
