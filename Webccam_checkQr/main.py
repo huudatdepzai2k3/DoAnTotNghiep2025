@@ -36,6 +36,7 @@ db_config = {
 # Các biến lưu trạng thái IP và URL hiện tại
 plc_ip_current = PLC_IP
 webserver_url_current = WEBSERVER_URL
+last_camera_connected = False
 
 # Khởi tạo kết nối với PLC
 client = snap7.client.Client()
@@ -248,6 +249,7 @@ class DemoApp(QWidget):
         self.capture.set(3, 640)
         self.capture.set(4, 480)
         self.camera_connected = self.capture.isOpened()
+        self.last_camera_connected = False
          
         self.yolo_model = YOLO("yolov8n.pt")  # Đường dẫn tới model đã huấn luyện
 
@@ -359,7 +361,6 @@ class DemoApp(QWidget):
     
     # Kiểm tra kết nối camera
     def check_camera_connection(self):
-        last_camera_connected = self.camera_connected
         if not self.capture.isOpened():
             self.log_to_terminal("🔄 Mất kết nối camera. Đang thử kết nối lại...")
             self.capture.release()
@@ -372,16 +373,6 @@ class DemoApp(QWidget):
             else:
                 self.log_to_terminal("❌ Không thể kết nối lại camera.")
                 self.camera_connected = False
-
-        if last_camera_connected != self.camera_connected:
-            if self.camera_connected:
-                data_push_2 = client.db_read(DB_NUMBER,2,1)
-                snap7.util.set_bool(data_push_2, 0, 1, True)
-                client.db_write(DB_NUMBER,2,data_push_2)
-            else:
-                data_push_2 = client.db_read(DB_NUMBER,2,1)
-                snap7.util.set_bool(data_push_2, 0, 1, False)
-                client.db_write(DB_NUMBER,2,data_push_2)
 
     # Hàm log thông báo vào terminal
     def log_to_terminal(self, msg):
@@ -435,7 +426,15 @@ class DemoApp(QWidget):
             self.log_to_terminal("⚠️ Không đọc được frame từ camera.")
             self.check_camera_connection()
             return
-            
+        
+        # Gửi trạng thái kết nối camera vào PLC       
+        if self.camera_connected != self.last_camera_connected:
+            if is_connected(client):
+                data_push_2 = client.db_read(DB_NUMBER,2,1)
+                snap7.util.set_bool(data_push_2, 0, 1, self.camera_connected)
+                client.db_write(DB_NUMBER,2,data_push_2)
+                self.last_camera_connected = self.camera_connected
+          
         # ---------- YOLOv8 Object Detection ----------
         results = self.yolo_model(frame)[0]
         for box in results.boxes:
