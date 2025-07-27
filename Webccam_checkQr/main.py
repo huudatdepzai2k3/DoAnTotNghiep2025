@@ -207,8 +207,7 @@ def get_position_from_file(qr_code, tinhtrang):
                     else:
                         pos = int(file_pos)
                     window.log_to_terminal(f"✅ Vị trí phân loại: {pos}")
-                    insert_qr_sorting(qr_code, address, tinhtrang, pos)
-                    # send_data_to_plc_SQL(qr_code, address, tinhtrang, pos)
+                    send_data_to_plc_SQL(qr_code, address, tinhtrang, pos)
             else:
                 window.log_to_terminal("⚠️ Không tìm thấy vị trí phù hợp.")
                         
