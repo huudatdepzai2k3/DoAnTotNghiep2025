@@ -9,11 +9,12 @@ const iotGateway = new IotGateway({
 // Khai báo SQL
 var mysql = require('mysql');
 var sqlcon = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "123456",
-  database: "SQL_PLC",
-  dateStrings:true
+    "host": "127.0.0.1",
+    "user": "admin",
+    "password": "123456",
+    "database": "sql_plc",
+    "port": 3306,
+    "charset": "utf8mb4",      
 });
 
 // /////////////////////////THIẾT LẬP KẾT NỐI WEB/////////////////////////
@@ -188,5 +189,115 @@ io.on("connection", function(socket){
                 socket.emit('Alarm_Show', convertedResponse);
             }
         });
+    });
+});
+
+// Call API 
+app.get("/api/search", function(req, res) {
+  const qr = req.query.qr;
+  if (!qr) {
+    return res.status(400).json({ error: "Thiếu mã QR" });
+  }
+
+  const query = `
+    SELECT sorted_time, qr_code, address, tinhtrang
+    FROM qr_sorted_log
+    WHERE qr_code = ?
+  `;
+
+  sqlcon.query(query, [qr], function(err, results) {
+    if (err) {
+      console.error("Lỗi SQL:", err);
+      return res.status(500).json({ error: "Lỗi truy vấn SQL" });
+    }
+
+    if (results.length === 0) {
+      return res.json({ found: false });
+    }
+
+    res.json({
+      found: true,
+      data: results[0]
+    });
+  });
+});
+
+
+app.get("/api/chart-data", function(req, res) {
+  const { start, end, mode } = req.query;
+
+  const queries = [
+    `SELECT COUNT(*) AS total FROM qr_sorted_log WHERE position = ? AND DATE(sorted_time) = CURDATE()`, 
+    `SELECT COUNT(*) AS total FROM qr_sorted_log WHERE position = 6 AND DATE(sorted_time) = CURDATE()`,  
+    `SELECT COUNT(*) AS total FROM qr_sorted_log WHERE position BETWEEN 1 AND 5 AND DATE(sorted_time) = CURDATE()` 
+  ];
+
+  const historicalModes = {
+    day: `
+      SELECT DATE(sorted_time) AS label, COUNT(*) AS total
+      FROM qr_sorted_log
+      WHERE sorted_time BETWEEN ? AND ?
+      GROUP BY DATE(sorted_time)
+    `,
+    month: `
+      SELECT DATE_FORMAT(sorted_time, '%Y-%m') AS label, COUNT(*) AS total
+      FROM qr_sorted_log
+      WHERE sorted_time BETWEEN ? AND ?
+      GROUP BY label
+    `,
+    year: `
+      SELECT DATE_FORMAT(sorted_time, '%Y') AS label, COUNT(*) AS total
+      FROM qr_sorted_log
+      WHERE sorted_time BETWEEN ? AND ?
+      GROUP BY label
+    `
+  };
+
+  const finalData = { position_counts: [], pie: [], history: [] };
+  const mysql = require("mysql");
+
+  const tasks = [];
+  for (let i = 1; i <= 5; i++) {
+    tasks.push(new Promise((resolve, reject) => {
+      sqlcon.query(queries[0], [i], (err, result) => {
+        if (err) return reject(err);
+        finalData.position_counts[i] = result[0].total;
+        resolve();
+      });
+    }));
+  }
+
+  tasks.push(new Promise((resolve, reject) => {
+    sqlcon.query(queries[1], (err, result) => {
+      if (err) return reject(err);
+      finalData.pie[0] = result[0].total;
+      resolve();
+    });
+  }));
+
+  tasks.push(new Promise((resolve, reject) => {
+    sqlcon.query(queries[2], (err, result) => {
+      if (err) return reject(err);
+      finalData.pie[1] = result[0].total;
+      resolve();
+    });
+  }));
+
+  // Lịch sử
+  if (start && end && mode && historicalModes[mode]) {
+    tasks.push(new Promise((resolve, reject) => {
+      sqlcon.query(historicalModes[mode], [start, end], (err, results) => {
+        if (err) return reject(err);
+        finalData.history = results;
+        resolve();
+      });
+    }));
+  }
+
+  Promise.all(tasks)
+    .then(() => res.json(finalData))
+    .catch(err => {
+      console.error("Lỗi truy vấn:", err);
+      res.status(500).json({ error: "Lỗi truy vấn dữ liệu" });
     });
 });

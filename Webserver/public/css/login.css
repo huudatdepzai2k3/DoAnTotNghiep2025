@@ -8,7 +8,7 @@ button:hover{opacity:0.8}
 #img_avatar{width:40%;border-radius:50%}#log_container,#login_container{padding:16px}
 #psw{float:right;padding-top:16px}
 #id01,#fogot_pwd,#create_account{position:fixed;z-index:5;left:0;top:0;right:0;left:0;overflow:auto;background-color:rgb(0,0,0);background-color:rgba(0,0,0,0.85)}
-#modal-content1{background-color:#fefefe;margin:5%auto 15%auto;border:1px solid#888;width:40%;height:610px}
+#modal-content1,#modal-content2,#modal-content3{background-color:#fefefe;margin:5%auto 15%auto;border:1px solid#888;width:40%;height:610px}
 #closebtt{position:absolute;right:25px;top:0;color:#000;font-size:35px;font-weight:bold}
 #closebtt:hover,#closebtt:focus{color:red;cursor:pointer}.animate{-webkit-animation:animatezoom 0.6s;animation:animatezoom 0.6s}
 @-webkit-keyframes animatezoom{from{-webkit-transform:scale(0)}to{-webkit-transform:scale(1)}}
