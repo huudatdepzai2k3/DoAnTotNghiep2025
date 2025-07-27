@@ -5,3 +5,4 @@
 .filter{margin-bottom:10px}
 .footer{text-align:center;font-size:14px;padding:10px;color:gray}
 #piechart,#columnchart,#historychart{width:100%;max-width:900px;height:100%;margin:auto}
+ #piechart{height: 229px !important;}

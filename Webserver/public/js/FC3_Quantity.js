@@ -35,8 +35,10 @@ async function getDataAndDrawCharts() {
         }]
       },
       options: {
+        responsive: true, 
+        maintainAspectRatio: false,
         legend: { display: false },
-        scales: { yAxes: [{ ticks: { beginAtZero: true } }] }
+        scales: { yAxes: [{ ticks: { beginAtZero: true , stepSize: 1} }] }
       }
     });
 
@@ -48,6 +50,10 @@ async function getDataAndDrawCharts() {
           backgroundColor: ["red", "green"],
           data: yValues_2
         }]
+      ,options: {
+          responsive: true, 
+          maintainAspectRatio: false, 
+        }
       }
     });
 
@@ -69,6 +75,8 @@ async function getDataAndDrawCharts() {
           }]
         },
         options: {
+            responsive: true, 
+            maintainAspectRatio: false, 
           legend: { display: false },
           scales: { yAxes: [{ ticks: { min: 0, max: max_val } }] }
         }

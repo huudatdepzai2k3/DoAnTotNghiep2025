@@ -118,6 +118,7 @@
         <!--Nút chọn màn hình 1-->
         <button id="btt_Screen_1" onclick="
             fn_ScreenChange('Screen_1','Screen_Main','Screen_2', 'Screen_3', 'Screen_4');
+            getDataAndDrawCharts();
         ">MÀN HÌNH GIÁM SÁT</button>
         <!--Nút chọn màn hình 2-->
         <button id="btt_Screen_2" onclick="
@@ -141,7 +142,7 @@
                     <label>Biểu đồ tỷ lệ chia chọn hệ thống hôm nay</label>
                 </div>
                 <div class="chart-container">
-                    <canvas id="piechart" height="230px"></canvas>
+                    <canvas id="piechart"></canvas>
                 </div>
             </div>
 
@@ -160,8 +161,8 @@
                 <input id="check_day" type="radio" name="range" checked /> Theo ngày
                 <input id="check_month" type="radio" name="range" /> Theo tháng
                 <input id="check_year" type="radio" name="range" /> Theo năm
-                &nbsp; Từ <input id="start_date" type="date" />
-                Đến <input id="end_date" type="date" />
+                &nbsp; Từ <input id="start_date" type="date" value="2025-07-20"/>
+                Đến <input id="end_date" type="date" value="2025-07-27"/>
             </div>
             <div class="chart-container">
                 <canvas id="historychart" height="230px"></canvas>
