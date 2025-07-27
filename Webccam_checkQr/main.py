@@ -24,7 +24,7 @@ WEBSERVER_URL = 'http://127.0.0.1:5000'
 
 # Thông tin kết nối MySQL
 db_config = {
-    "host": "localhost",
+    "host": "127.0.0.1",
     "user": "admin",
     "password": "123456",
     "database": "sql_plc",
@@ -84,13 +84,16 @@ def is_connected_mysql():
         return False
 
 # Hàm ghi log QR code vào MySQL 
-def insert_qr_sorting(qr_code, address, tinhtrang, position):
+def insert_qr_sorting(qr_code, address, tinhtrang, position, sorted_time=None):
+    import os
+    if sorted_time is None:
+        sorted_time = datetime.datetime.now()
+
     conn = None
     cursor = None
     try:
         conn = pymysql.connect(**db_config)
         cursor = conn.cursor()
-        sorted_time = datetime.datetime.now()
         sql = """
             INSERT INTO qr_sorted_log (sorted_time, qr_code, address, tinhtrang, position)
             VALUES (%s, %s, %s, %s, %s)
@@ -100,10 +103,24 @@ def insert_qr_sorting(qr_code, address, tinhtrang, position):
         conn.commit()
 
         window.log_to_terminal(f"✅ Ghi thành công QR: {qr_code} vào MySQL lúc {sorted_time}")
-    except pymysql.MySQLError as err:
-        window.log_to_terminal("❌ Lỗi ghi MySQL:", err)
-    except Exception as ex:
-        window.log_to_terminal("❌ Lỗi khác:", ex)
+    except (pymysql.MySQLError, Exception) as e:
+        window.log_to_terminal(f"❌ Lỗi ghi MySQL: {e}")
+
+        # Tạo dữ liệu ghi vào CSV
+        data = {
+            "sorted_time": [sorted_time],
+            "qr_code": [qr_code],
+            "address": [address],
+            "tinhtrang": [tinhtrang],
+            "position": [position]
+        }
+        df = pd.DataFrame(data)
+
+        csv_file = "product_log.csv"
+        # Nếu file chưa tồn tại, ghi header; nếu tồn tại thì ghi nối tiếp
+        write_header = not os.path.exists(csv_file)
+        df.to_csv(csv_file, mode='a', index=False, header=write_header, encoding='utf-8')
+        print(f"⚠️ Đã ghi dữ liệu vào file tạm: {csv_file}")
     finally:
         if cursor:
             cursor.close()
@@ -190,7 +207,8 @@ def get_position_from_file(qr_code, tinhtrang):
                     else:
                         pos = int(file_pos)
                     window.log_to_terminal(f"✅ Vị trí phân loại: {pos}")
-                    send_data_to_plc_SQL(qr_code, address, tinhtrang, pos)
+                    insert_qr_sorting(qr_code, address, tinhtrang, pos)
+                    # send_data_to_plc_SQL(qr_code, address, tinhtrang, pos)
             else:
                 window.log_to_terminal("⚠️ Không tìm thấy vị trí phù hợp.")
                         
@@ -207,16 +225,34 @@ class ConnectionMonitorThread(QThread):
     def run(self):
         global stop_threads
         while not stop_threads:
-            plc_status = is_connected(client)  # Kiểm tra kết nối PLC
-            web_status = is_connected_webserver()  # Kiểm tra kết nối Webserver
-            mysql_status = is_connected_mysql() # Kiểm tra kết nối MySQL
+            plc_status = is_connected(client)
+            web_status = is_connected_webserver()
+            mysql_status = is_connected_mysql()
+
             if plc_status != self.last_plc_status or web_status != self.last_web_status or mysql_status != self.last_mysql_status:
-                self.status_updated.emit(plc_status, web_status, mysql_status)  # Cập nhật trạng thái kết nối
+                self.status_updated.emit(plc_status, web_status, mysql_status)
                 self.last_plc_status = plc_status
                 self.last_web_status = web_status
                 self.last_mysql_status = mysql_status
-            time.sleep(5)
 
+            if is_connected_mysql():
+                # Ghi lại dữ liệu từ product_log.csv (nếu có)
+                csv_file = 'product_log.csv'
+                if os.path.exists(csv_file):
+                    df = pd.read_csv(csv_file)
+                    for _, row in df.iterrows():
+                        sorted_time = row['sorted_time']
+                        qr_code = row['qr_code']
+                        address = row['address']
+                        tinhtrang = row['tinhtrang']
+                        position = row['position']
+                        insert_qr_sorting(qr_code, address, tinhtrang, position, sorted_time)
+
+                    # Ghi xong toàn bộ thì xóa file
+                    os.remove(csv_file)
+                    window.log_to_terminal("🗑️ Đã ghi lại và xóa file product_log.csv")
+
+            # Xử lý mất kết nối PLC
             if not plc_status:
                 window.log_to_terminal("🔄 Mất kết nối PLC. Thử kết nối lại...")
                 try:
@@ -226,9 +262,10 @@ class ConnectionMonitorThread(QThread):
                 except Exception as e:
                     window.log_to_terminal(f"❌ Lỗi kết nối lại PLC: {e}")
 
+            # Xử lý mất kết nối MySQL
             if not mysql_status:
                 window.log_to_terminal("🔄 Mất kết nối MySQL. Thử kết nối lại...")
-                try :
+                try:
                     conn = pymysql.connect(**db_config)
                     if conn.open:
                         window.log_to_terminal("✅ Đã kết nối lại MySQL thành công.")
@@ -236,6 +273,8 @@ class ConnectionMonitorThread(QThread):
                         window.log_to_terminal("❌ Không thể kết nối lại MySQL.")
                 except Exception as e:
                     window.log_to_terminal(f"❌ Lỗi kết nối lại MySQL: {e}")
+ 
+            time.sleep(5)
 
 # Lớp giao diện chính ứng dụng
 class DemoApp(QWidget):
