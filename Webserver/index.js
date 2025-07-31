@@ -113,12 +113,12 @@ function fn_sql_insert() {
 // /////////////////////////////// CẢNH BÁO ///////////////////////////////
 /////////////////////// GỬI TRẠNG THÁI ALARM QUA SOCKET ///////////////////////
 function fn_tag() {
-    io.sockets.emit("cylinder1_tripped", tagArr[0]);
-    io.sockets.emit("cylinder2_tripped", tagArr[1]);
-    io.sockets.emit("cylinder3_tripped", tagArr[2]);
-    io.sockets.emit("cylinder4_tripped", tagArr[3]);
-    io.sockets.emit("cylinder5_tripped", tagArr[4]);
-    io.sockets.emit("motor_tripped", tagArr[5]);
+    io.sockets.emit("cylinder1_tripped", tagArr_1[0]);
+    io.sockets.emit("cylinder2_tripped", tagArr_1[1]);
+    io.sockets.emit("cylinder3_tripped", tagArr_1[2]);
+    io.sockets.emit("cylinder4_tripped", tagArr_1[3]);
+    io.sockets.emit("cylinder5_tripped", tagArr_1[4]);
+    io.sockets.emit("motor_tripped", tagArr_1[5]);
 }
 
 /////////////////////// THÊM CẢNH BÁO MỚI VÀO SQL ///////////////////////
@@ -166,7 +166,7 @@ const alarmStates = [
 /////////////////////// HÀM QUẢN LÝ CẢNH BÁO ///////////////////////
 function fn_Alarm_Manage() {
     for (let i = 0; i < alarmStates.length; i++) {
-        const current = tagArr[i] ?? false; 
+        const current = tagArr_1[i] ?? false; 
         const alarm = alarmStates[i];
 
         if (current !== alarm.prev) {
