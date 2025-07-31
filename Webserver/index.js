@@ -187,11 +187,19 @@ function fn_Alarm_Manage() {
 io.on("connection", socket => {
     console.log("🟢 Client đã kết nối");
 
-    socket.on("Client-send-cmdM1", () => {
-        const button_state = "state_button";
-        const value = tagArr.includes(0) ? 1 : 0;
-        fn_Data_Write(button_state, value);
+    socket.on("Client-send-cmd-toggle", (tag) => {
+        const index = tags.indexOf(tag);
+        if (index === -1) {
+            console.error("❌ Không tìm thấy tag:", tag);
+            return;
+        }
+
+        const currentValue = tagArr[index] ?? 0;
+        const newValue = currentValue === 0 ? 1 : 0;
+        fn_Data_Write(tag, newValue);
+        io.emit("log", { type: "info", message: `🔁 Toggle tag: ${tag} = ${newValue}` });
     });
+
 
     socket.on("msg_Alarm_Show", () => {
         const sql = "SELECT * FROM alarm WHERE Status = 'I'";

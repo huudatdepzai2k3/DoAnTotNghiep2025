@@ -240,12 +240,12 @@
             <h2>Điều khiển và trạng thái hệ thống</h2>
             <div class="control_panel_content">
                 <div class="state_all div_button">
-                    <img id = "Button_1" class="button" onclick= "socket.emit('Client-send-cmdM1')"><script> fn_SymbolStatus("Button_1", "Button", "state_motor") </script></br>
+                    <img id = "Button_1" class="button" onclick= "socket.emit('Client-send-cmd-toggle',state_run)"><script> fn_SymbolStatus("Button_1", "Button", "state_motor") </script></br>
                     <!-- Phần thân của website -->
                     <h4>Trạng thái hoạt động</h4>
                 </div>
                 <div class="cd_hoatdong div_button">
-                    <img id = "Button_2" class="button" ><script> fn_SymbolStatus("Button_2", "light", "state_auto") </script></br>
+                    <img id = "Button_2" class="button" onclick= "socket.emit('Client-send-cmd-toggle',state_auto)"><script> fn_SymbolStatus("Button_2", "light", "state_auto") </script></br>
                     <h4>Trạng thái auto</h4>
                 </div>
             </div>
