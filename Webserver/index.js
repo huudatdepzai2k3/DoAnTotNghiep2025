@@ -113,6 +113,7 @@ function fn_sql_insert() {
 // /////////////////////////////// CẢNH BÁO ///////////////////////////////
 /////////////////////// GỬI TRẠNG THÁI ALARM QUA SOCKET ///////////////////////
 function fn_tag() {
+    const tagArr_1 = tagArr.slice(15, 21);
     io.sockets.emit("cylinder1_tripped", tagArr_1[0]);
     io.sockets.emit("cylinder2_tripped", tagArr_1[1]);
     io.sockets.emit("cylinder3_tripped", tagArr_1[2]);
