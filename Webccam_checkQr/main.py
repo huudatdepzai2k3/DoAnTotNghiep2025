@@ -20,7 +20,7 @@ PLC_IP = '192.168.0.1'
 RACK = 0
 SLOT = 1
 DB_NUMBER = 7
-WEBSERVER_URL = 'http://127.0.0.1:5000'
+WEBSERVER_URL = 'http://127.0.0.1:3000'
 
 # Thông tin kết nối MySQL
 db_config = {
