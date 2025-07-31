@@ -48,7 +48,7 @@ function fetchTable() {
       return res.json();
     })
     .then(data => {
-      const tbody = document.getElementById("resultTable");
+      const tbody = document.getElementById("resultTable_content");
       tbody.innerHTML = "";
 
       if (!data.length) {

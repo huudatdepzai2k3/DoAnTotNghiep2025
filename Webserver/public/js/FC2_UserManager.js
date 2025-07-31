@@ -82,3 +82,81 @@ async function create_account() {
         alert("Không thể tạo tài khoản");
     }
 }
+
+async function loadUsers() {
+  try {
+    const res = await fetch("/api/users");
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      throw new Error("API không trả về danh sách (mảng)");
+    }
+
+    const tableBody = document.getElementById("userTableBody");
+    if (!tableBody) {
+      throw new Error("Không tìm thấy phần tử với id 'userTableBody'");
+    }
+
+    tableBody.innerHTML = "";
+    data.forEach(user => {
+      const row = document.createElement("tr");
+
+      // Tạo thẻ <td> cho password có thể chỉnh sửa
+      const passwordCell = document.createElement("td");
+      passwordCell.textContent = user.password;
+      passwordCell.style.cursor = "pointer";
+      passwordCell.addEventListener("click", () => makeEditable(passwordCell, user.username));
+
+      row.innerHTML = `
+        <td>${user.username}</td>
+        <td>${user.phone_number}</td>
+      `;
+      row.appendChild(passwordCell);
+
+      tableBody.appendChild(row);
+    });
+  } catch (err) {
+    console.error("❌ Lỗi:", err.message);
+  }
+}
+
+function makeEditable(cell, username) {
+  const oldPassword = cell.textContent;
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = oldPassword;
+  input.style.width = "100%";
+
+  // Khi nhấn Enter hoặc click ra ngoài -> cập nhật
+  input.addEventListener("blur", () => updatePassword(cell, input.value, username));
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") input.blur(); // giả lập blur
+  });
+
+  cell.innerHTML = "";
+  cell.appendChild(input);
+  input.focus();
+}
+
+async function updatePassword(cell, newPassword, username) {
+  try {
+    const res = await fetch("/api/update-password", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, newPassword })
+    });
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || "Lỗi cập nhật");
+
+    // Cập nhật thành công
+    cell.textContent = newPassword;
+    cell.style.cursor = "pointer";
+    cell.addEventListener("click", () => makeEditable(cell, username));
+  } catch (err) {
+    console.error("❌ Lỗi cập nhật mật khẩu:", err.message);
+    alert("Cập nhật mật khẩu thất bại!");
+    cell.textContent = "❌";
+  }
+}
+

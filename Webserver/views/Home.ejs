@@ -122,7 +122,7 @@
             fn_ScreenChange('Screen_3','Screen_Main','Screen_1', 'Screen_2', 'Screen_4');
         ">MÀN HÌNH QUẢN LÍ ĐƠN HÀNG</button>
         <button id="btt_Screen_4" style="display:none" onclick="
-            fn_ScreenChange('Screen_4','Screen_Main','Screen_1', 'Screen_2', 'Screen_3');
+            fn_ScreenChange('Screen_4','Screen_Main','Screen_1', 'Screen_2', 'Screen_3'); loadUsers();
         ">MÀN HÌNH QUẢN LÍ NGƯỜI DÙNG</button>
     </div>
 
@@ -209,7 +209,7 @@
                             <th>Trạng thái đơn hàng</th>
                         </tr>
                         </thead>
-                        <tbody></tbody>
+                        <tbody id="resultTable_content"></tbody>
                     </table>
                 </div>
             </center>
@@ -217,7 +217,22 @@
         </div>
     </div>
     <div id="Screen_4">
-        <h1 class="hello"> Xin chào, Người dùng!</h1>
+        <h3> Xin chào, Admin!</h3>
+        <center>
+            <h1>Danh sách người dùng trên hệ thống</h1>
+            <div style="max-height: 580px; overflow-y: auto;">
+                <table id="userTable">
+                    <thead>
+                    <tr>
+                        <th>Tên đăng nhập</th>
+                        <th>Số điện thoại</th>
+                        <th>Mật khẩu</th>
+                    </tr>
+                    </thead>
+                    <tbody id="userTableBody"></tbody>
+                </table>
+            </div>
+        </center>
     </div>
 <!-- //////////////Code cho màn hình chính////////////// -->
     <div id = "Screen_Main">

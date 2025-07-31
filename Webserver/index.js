@@ -247,6 +247,42 @@ app.post("/api/create-account", express.json(), async (req, res) => {
     });
 });
 
+// load user 
+app.get("/api/users", (req, res) => {
+  const sql = "SELECT username, phone_number, password FROM users WHERE role = 'user'";
+  sqlcon.query(sql, (err, results) => {
+    if (err) {
+      console.error("❌ Lỗi lấy danh sách người dùng:", err.message);
+      return res.status(500).json({ error: "Lỗi server", details: err.message });
+    }
+
+    if (!Array.isArray(results)) {
+      console.error("❌ Dữ liệu không phải mảng:", results);
+      return res.status(500).json({ error: "Dữ liệu không hợp lệ" });
+    }
+
+    console.log("📦 Danh sách trả về:", results);
+    res.json(results);
+  });
+});
+
+app.put("/api/update-password", express.json(), (req, res) => {
+  const { username, newPassword } = req.body;
+
+  if (!username || !newPassword) {
+    return res.status(400).json({ error: "Thiếu thông tin" });
+  }
+
+  const sql = "UPDATE users SET password = ? WHERE username = ?";
+  db.query(sql, [newPassword, username], (err, result) => {
+    if (err) {
+      console.error("Lỗi cập nhật mật khẩu:", err.message);
+      return res.status(500).json({ error: "Lỗi server" });
+    }
+    res.json({ success: true });
+  });
+});
+
 
 // check_qr
 app.get("/api/search", (req, res) => {
