@@ -15,7 +15,7 @@ app.use(express.static("public"));
 app.set("view engine", "ejs");
 app.set("views", "./views");
 
-server.listen(3000, () => console.log("✅ Server chạy tại http://localhost:3000"));
+server.listen(3000, () => console.log("✅ Server chạy tại http://127.0.0.1:3000"));
 app.get("/", (req, res) => res.render("home"));
 
 ////////////////////// KẾT NỐI MySQL //////////////////////
