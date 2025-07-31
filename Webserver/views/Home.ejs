@@ -194,7 +194,7 @@
                 <button onclick="searchOrder(check_QR.value)">Tìm kiếm</button>
                 <p>Mã QR :<span id="qr_number"></span></p>
                 <p>Vị trí :<span id="qr_vitri"></span></p>
-                <p>Thời gian :<span id="qr_time"></span></p>
+                <p>Thời gian phân loại:<span id="qr_time"></span></p>
                 <p>Trạng thái đơn hàng :<span id="qr_trangthai"></span></p>
             </center>
             <center class="Export_Excel">
@@ -202,19 +202,22 @@
                 <div>
                     Từ <input id="start_date_check" type="date" />
                     Đến <input id="end_date_check" type="date" />
-                    <button id="exportExcel" onclick="exportToExcel()">Xuất Excel</button>
+                    <button onclick="fetchTable()">Tra cứu</button>
+                    <button id="exportExcel" onclick="exportExcel()">Xuất Excel</button>
                 </div>
-                <table id="resultTable">
-                    <thead>
+                <div style="max-height: 580px; overflow-y: auto;">
+                    <table id="resultTable">
+                        <thead>
                         <tr>
                             <th>Mã QR</th>
                             <th>Vị trí</th>
                             <th>Thời gian phân loại</th>
                             <th>Trạng thái đơn hàng</th>
                         </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </center>
 
         </div>

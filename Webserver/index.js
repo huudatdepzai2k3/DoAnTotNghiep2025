@@ -132,7 +132,7 @@ app.get("/api/search", (req, res) => {
     const qr = req.query.qr;
     if (!qr) return res.status(400).json({ error: "Thiếu mã QR" });
 
-    const query = `SELECT sorted_time, qr_code, address, tinhtrang FROM qr_sorted_log WHERE qr_code = ?`;
+    const query = `SELECT sorted_time, qr_code, address, tinhtrang FROM qr_sorted_log WHERE qr_code = ? ORDER BY sorted_time DESC LIMIT 1`;
     sqlcon.query(query, [qr], (err, results) => {
         if (err) return res.status(500).json({ error: "Lỗi truy vấn SQL" });
         if (results.length === 0) return res.json({ found: false });
@@ -140,6 +140,87 @@ app.get("/api/search", (req, res) => {
     });
 });
 
+app.get("/api/sorted-table", (req, res) => {
+  const { from, to } = req.query;
+  if (!from || !to) return res.status(400).json({ error: "Thiếu from/to" });
+
+  const query = `
+    SELECT qr_code, address, sorted_time, tinhtrang 
+    FROM qr_sorted_log 
+    WHERE sorted_time BETWEEN ? AND ?
+    ORDER BY sorted_time ASC
+  `;
+
+  sqlcon.query(query, [from, to], (err, results) => {
+    if (err) {
+      console.error("❌ Lỗi truy vấn SQL:", err);
+      return res.status(500).json({ error: err.message }); // 👈 Fix tại đây
+    }
+
+    res.json(results);
+  });
+});;
+
+const ExcelJS = require("exceljs");
+app.get("/export-excel", (req, res) => {
+  const { from, to } = req.query;
+  if (!from || !to) return res.status(400).send("Thiếu from hoặc to");
+
+  const query = `
+    SELECT qr_code, address, sorted_time, tinhtrang 
+    FROM qr_sorted_log 
+    WHERE sorted_time BETWEEN ? AND ?
+    ORDER BY sorted_time ASC
+  `;
+
+  sqlcon.query(query, [from, to], async (err, results) => {
+    if (err) {
+      console.error("❌ Lỗi truy vấn:", err);
+      return res.status(500).send("Lỗi export Excel");
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Sorted Logs");
+
+    // Định nghĩa cột
+    sheet.columns = [
+      { header: "Mã QR", key: "qr_code", width: 25 },
+      { header: "Vị trí", key: "address", width: 30 },
+      { header: "Thời gian phân loại", key: "sorted_time", width: 25 },
+      { header: "Trạng thái đơn hàng", key: "tinhtrang", width: 25 },
+    ];
+
+    // Chuyển đổi thời gian sang chuỗi định dạng đẹp
+    results.forEach(row => {
+      const formattedTime = new Date(row.sorted_time).toLocaleString("vi-VN", {
+        hour12: false,
+        timeZone: "Asia/Ho_Chi_Minh",
+      });
+
+      sheet.addRow({
+        qr_code: row.qr_code,
+        address: row.address,
+        sorted_time: formattedTime,
+        tinhtrang: row.tinhtrang,
+      });
+    });
+
+    // Header cho file xuất
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=danh_sach_phan_loai_${from}_to_${to}.xlsx`
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  });
+});
+
+// create chart
 app.get("/api/chart-data", (req, res) => {
     const { start, end, mode } = req.query;
     const finalData = { position_counts: [], pie: [], history: [] };
