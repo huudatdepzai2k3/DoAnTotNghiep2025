@@ -59,7 +59,8 @@ const tags = [
     "sql_insert_Trigger", "state_run", "state_auto", "state_motor",
     "state_sensor_1", "state_sensor_2", "state_sensor_3", "state_sensor_4",
     "state_sensor_5", "state_sensor_detech",
-    "state_cylinder_1", "state_cylinder_2", "state_cylinder_3", "state_cylinder_4", "state_cylinder_5"
+    "state_cylinder_1", "state_cylinder_2", "state_cylinder_3", "state_cylinder_4", "state_cylinder_5","cylinder1_tripped","cylinder2_tripped",
+    "cylinder3_tripped","cylinder4_tripped","cylinder5_tripped","motor_tripped"
 ];
 
 const TagList = tags.reduce((tb, tag) => tb.read(tag), tagBuilder).get();
@@ -85,6 +86,8 @@ setInterval(() => {
         const trigger = tagArr[0];
         if (trigger === true && !last_trigger) {
             fn_sql_insert();
+            fn_sql_alarm_insert();
+            fn_Alarm_Manage();
         }
         last_trigger = trigger;
     });
@@ -107,6 +110,78 @@ function fn_sql_insert() {
         else console.log("✅ SQL ghi dữ liệu thành công");
     });
 }
+
+// /////////////////////////////// CẢNH BÁO ///////////////////////////////
+/////////////////////// GỬI TRẠNG THÁI ALARM QUA SOCKET ///////////////////////
+function fn_tag() {
+    io.sockets.emit("cylinder1_tripped", tagArr[0]);
+    io.sockets.emit("cylinder2_tripped", tagArr[1]);
+    io.sockets.emit("cylinder3_tripped", tagArr[2]);
+    io.sockets.emit("cylinder4_tripped", tagArr[3]);
+    io.sockets.emit("cylinder5_tripped", tagArr[4]);
+    io.sockets.emit("motor_tripped", tagArr[5]);
+}
+
+/////////////////////// THÊM CẢNH BÁO MỚI VÀO SQL ///////////////////////
+function fn_sql_alarm_insert(ID, AlarmName) {
+    const sql = "INSERT INTO alarm (date_time, ID, Status, AlarmName) VALUES (?, ?, ?, ?)";
+
+    const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+    const timeNow = new Date(Date.now() - tzoffset).toISOString().slice(0, -1).replace("T", " ");
+
+    const values = [timeNow, ID, 'I', AlarmName];
+
+    sqlcon.query(sql, values, (err, result) => {
+        if (err) {
+            console.error("❌ Lỗi ghi alarm:", err.message);
+            io.emit("log", { type: "error", message: `❌ Ghi alarm lỗi: ${err.message}` });
+        } else {
+            io.emit("log", { type: "info", message: `🆘 Ghi cảnh báo mới: ID ${ID} - ${AlarmName}` });
+        }
+    });
+}
+
+/////////////////////// XÁC NHẬN HẾT CẢNH BÁO ///////////////////////
+function fn_sql_alarm_ack(ID) {
+    const sql = "UPDATE alarm SET Status = 'IO' WHERE ID = ?";
+    sqlcon.query(sql, [ID], (err, result) => {
+        if (err) {
+            console.error("❌ Lỗi xác nhận alarm:", err.message);
+            io.emit("log", { type: "error", message: `❌ Xác nhận alarm lỗi: ${err.message}` });
+        } else {
+            io.emit("log", { type: "info", message: `✅ Xác nhận cảnh báo kết thúc: ID ${ID}` });
+        }
+    });
+}
+
+/////////////////////// TRẠNG THÁI CẢNH BÁO TRƯỚC ĐÓ ///////////////////////
+const alarmStates = [
+    { id: 1, name: "xi lanh 1 sự cố", prev: false },
+    { id: 2, name: "xi lanh 2 sự cố", prev: false },
+    { id: 3, name: "xi lanh 3 sự cố", prev: false },
+    { id: 4, name: "xi lanh 4 sự cố", prev: false },
+    { id: 5, name: "xi lanh 5 sự cố", prev: false },
+    { id: 6, name: "động cơ băng tải sự cố", prev: false }, 
+];
+
+/////////////////////// HÀM QUẢN LÝ CẢNH BÁO ///////////////////////
+function fn_Alarm_Manage() {
+    for (let i = 0; i < alarmStates.length; i++) {
+        const current = tagArr[i] ?? false; // ✅ bảo vệ nếu tagArr[i] undefined
+        const alarm = alarmStates[i];
+
+        if (current !== alarm.prev) {
+            if (current === true) {
+                fn_sql_alarm_insert(alarm.id, alarm.name);
+            } else {
+                fn_sql_alarm_ack(alarm.id);
+            }
+
+            alarm.prev = current; // ✅ chỉ cập nhật khi thay đổi
+        }
+    }
+}
+
 
 ////////////////////// SOCKET.IO //////////////////////
 io.on("connection", socket => {
