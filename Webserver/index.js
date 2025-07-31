@@ -208,7 +208,7 @@ app.get("/api/pwd-reset", (req, res) => {
 });
 
 // api tạo tài khoản
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 app.post("/api/create-account", express.json(), async (req, res) => {
     const { username, password, phone, role } = req.body;
