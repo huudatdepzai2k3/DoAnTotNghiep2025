@@ -41,10 +41,6 @@ function fn_SymbolStatus(ObjectID, SymName, Tag)
         {
             document.getElementById(ObjectID).src = "images/Symbol/" + SymName + "_2.png";
         }
-        else if (data == 3)
-        {
-            document.getElementById(ObjectID).src = "images/Symbol/" + SymName + "_3.png";
-        }
         else 
         {
             document.getElementById(ObjectID).src = "images/Symbol/" + SymName + "_0.png";
