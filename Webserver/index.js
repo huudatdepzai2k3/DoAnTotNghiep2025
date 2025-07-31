@@ -86,7 +86,6 @@ setInterval(() => {
         const trigger = tagArr[0];
         if (trigger === true && !last_trigger) {
             fn_sql_insert();
-            fn_sql_alarm_insert();
             fn_Alarm_Manage();
         }
         last_trigger = trigger;
