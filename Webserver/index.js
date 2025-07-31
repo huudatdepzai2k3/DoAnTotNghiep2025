@@ -57,9 +57,9 @@ const iotGateway = new IotGateway({ host: "127.0.0.1", port: 5000 });
 
 const tags = [
     "sql_insert_Trigger", "state_run", "state_auto", "state_motor",
-    "state_cam_bien_1", "state_cam_bien_2", "state_cam_bien_3", "state_cam_bien_4",
-    "state_cam_bien_5", "state_cam_bien_6",
-    "state_xi_lanh_1", "state_xi_lanh_2", "state_xi_lanh_3", "state_xi_lanh_4", "state_xi_lanh_5"
+    "state_sensor_1", "state_sensor_2", "state_sensor_3", "state_sensor_4",
+    "state_sensor_5", "state_sensor_detech",
+    "state_cylinder_1", "state_cylinder_2", "state_cylinder_3", "state_cylinder_4", "state_cylinder_5"
 ];
 
 const TagList = tags.reduce((tb, tag) => tb.read(tag), tagBuilder).get();
@@ -99,7 +99,7 @@ function fn_sql_insert() {
         tagArr[7], tagArr[8], tagArr[9], tagArr[10], tagArr[11],
         tagArr[12], tagArr[13], tagArr[14]
     ];
-    const sql = `INSERT INTO plc_data (date_time, data_auto, data_motor, data_cam_bien_1, data_cam_bien_2, data_cam_bien_3, data_cam_bien_4, data_cam_bien_5, data_cam_bien_6, data_xi_lanh_1, data_xi_lanh_2, data_xi_lanh_3, data_xi_lanh_4, data_xi_lanh_5)
+    const sql = `INSERT INTO plc_data (date_time, data_auto, data_motor, data_sensor_1, data_sensor_2, data_sensor_3, data_sensor_4, data_sensor_5, data_sensor_detech, data_cylinder_1, data_cylinder_2, data_cylinder_3, data_cylinder_4, data_cylinder_5)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     sqlcon.query(sql, values, err => {
@@ -267,18 +267,23 @@ app.get("/api/users", (req, res) => {
 });
 
 app.put("/api/update-password", express.json(), (req, res) => {
+  console.log("📥 PUT /api/update-password");
+  console.log("📦 Body:", req.body);
+
   const { username, newPassword } = req.body;
 
   if (!username || !newPassword) {
-    return res.status(400).json({ error: "Thiếu thông tin" });
+    return res.status(400).json({ error: "Thiếu thông tin đầu vào" });
   }
 
   const sql = "UPDATE users SET password = ? WHERE username = ?";
   db.query(sql, [newPassword, username], (err, result) => {
     if (err) {
-      console.error("Lỗi cập nhật mật khẩu:", err.message);
-      return res.status(500).json({ error: "Lỗi server" });
+      console.error("❌ Lỗi SQL:", err.message);
+      return res.status(500).json({ error: "Lỗi SQL", details: err.message });
     }
+
+    console.log("✅ Update thành công:", result);
     res.json({ success: true });
   });
 });
