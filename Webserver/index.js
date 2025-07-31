@@ -167,7 +167,7 @@ const alarmStates = [
 /////////////////////// HÀM QUẢN LÝ CẢNH BÁO ///////////////////////
 function fn_Alarm_Manage() {
     for (let i = 0; i < alarmStates.length; i++) {
-        const current = tagArr[i] ?? false; // ✅ bảo vệ nếu tagArr[i] undefined
+        const current = tagArr[i] ?? false; 
         const alarm = alarmStates[i];
 
         if (current !== alarm.prev) {
@@ -177,7 +177,7 @@ function fn_Alarm_Manage() {
                 fn_sql_alarm_ack(alarm.id);
             }
 
-            alarm.prev = current; // ✅ chỉ cập nhật khi thay đổi
+            alarm.prev = current; 
         }
     }
 }
