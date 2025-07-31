@@ -128,6 +128,127 @@ io.on("connection", socket => {
 });
 
 ////////////////////// API //////////////////////
+
+// Đăng nhập người dùng qua username hoặc phone
+app.get("/api/login", (req, res) => {
+    const { user, pass } = req.query;
+    if (!user || !pass) {
+        return res.status(400).json({ error: "Thiếu thông tin đăng nhập" });
+    }
+
+    const sql = `
+        SELECT username, phone_number, role 
+        FROM users 
+        WHERE (username = ? OR phone_number = ?) AND password = ?
+        LIMIT 1
+    `;
+
+    sqlcon.query(sql, [user, user, pass], (err, results) => {
+        if (err) {
+            console.error("❌ Lỗi truy vấn đăng nhập:", err);
+            return res.status(500).json({ error: "Lỗi máy chủ" });
+        }
+
+        if (results.length === 0) {
+            return res.status(401).json({ error: "Sai tài khoản hoặc mật khẩu" });
+        }
+
+        res.json({ success: true, user: results[0] });
+    });
+});
+
+
+const fs = require("fs");
+const request = require("request");
+
+// API quên mật khẩu
+app.get("/api/pwd-reset", (req, res) => {
+    const { phone } = req.query;
+    if (!phone) return res.status(400).json({ error: "Thiếu số điện thoại" });
+
+    const sql = `SELECT * FROM users WHERE phone_number = ? LIMIT 1`;
+    sqlcon.query(sql, [phone], (err, results) => {
+        if (err) return res.status(500).json({ error: "Lỗi truy vấn SQL" });
+        if (results.length === 0) return res.status(404).json({ error: "Không tìm thấy số điện thoại" });
+
+        // Gửi SMS reset password
+        const client_id = fs.readFileSync("client_id.txt", "utf8").trim();
+        const client_secret = fs.readFileSync("client_secret.txt", "utf8").trim();
+
+        const authOptions = {
+            uri: "https://api.telecomscloud.com/v1/authorization/oauth2/grant-client",
+            method: "POST",
+            json: { client_id, client_secret }
+        };
+
+        request(authOptions, (error, response, apiAuth) => {
+            if (error || !apiAuth.access_token) return res.status(500).json({ error: "Không xác thực được SMS API" });
+
+            const accessToken = apiAuth.access_token;
+            const sendSMSoptions = {
+                uri: `https://api.telecomscloud.com/v1/sms/outbound?access_token=${accessToken}`,
+                method: "POST",
+                json: {
+                    to: phone,
+                    from: "YourServiceName",
+                    message: "Đây là liên kết đặt lại mật khẩu của bạn: http://example.com/reset-password"
+                }
+            };
+
+            request(sendSMSoptions, (err2, response2, body2) => {
+                if (err2 || response2.statusCode !== 200) {
+                    console.error("Gửi SMS thất bại:", err2);
+                    return res.status(500).json({ error: "Gửi SMS thất bại" });
+                }
+
+                res.json({ success: true, message: "Đã gửi liên kết đặt lại mật khẩu qua SMS" });
+            });
+        });
+    });
+});
+
+// api tạo tài khoản
+const bcrypt = require("bcrypt");
+
+app.post("/api/create-account", express.json(), async (req, res) => {
+    const { username, password, phone, role } = req.body;
+
+    if (!username || !password || !phone) {
+        return res.status(400).json({ error: "Thiếu thông tin" });
+    }
+
+    const checkUsernameSQL = `SELECT id FROM users WHERE username = ?`;
+    const checkPhoneSQL = `SELECT id FROM users WHERE phone_number = ?`;
+
+    // Kiểm tra username trùng
+    sqlcon.query(checkUsernameSQL, [username], (err1, result1) => {
+        if (err1) return res.status(500).json({ error: "Lỗi truy vấn username" });
+        if (result1.length > 0) return res.status(409).json({ error: "Username đã tồn tại" });
+
+        // Kiểm tra phone_number trùng
+        sqlcon.query(checkPhoneSQL, [phone], async (err2, result2) => {
+            if (err2) return res.status(500).json({ error: "Lỗi truy vấn số điện thoại" });
+            if (result2.length > 0) return res.status(409).json({ error: "Số điện thoại đã tồn tại" });
+
+            try {
+                const hashedPassword = await bcrypt.hash(password, 10);
+                const insertSQL = `
+                    INSERT INTO users (username, password, phone_number, role)
+                    VALUES (?, ?, ?, ?)
+                `;
+                sqlcon.query(insertSQL, [username, hashedPassword, phone, role || "user"], err3 => {
+                    if (err3) return res.status(500).json({ error: "Lỗi thêm tài khoản" });
+                    res.json({ success: true, message: "Tạo tài khoản thành công" });
+                });
+            } catch (e) {
+                res.status(500).json({ error: "Lỗi xử lý mật khẩu" });
+            }
+        });
+    });
+});
+
+
+// check_qr
 app.get("/api/search", (req, res) => {
     const qr = req.query.qr;
     if (!qr) return res.status(400).json({ error: "Thiếu mã QR" });
