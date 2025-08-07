@@ -281,12 +281,12 @@
             <h2>Điều khiển và trạng thái hệ thống</h2>
             <div class="control_panel_content">
                 <div class="state_all div_button">
-                    <img id = "Button_1" class="button"></br>
-                    <h4>Trạng thái hoạt động</h4>
+                    <img id="Button_1" class="button" onclick="socket.emit('Client-send-cmd-toggle', 'state_run');">
+                    <h4>Nút dừng khẩn cấp</h4>
                 </div>
                 <div class="cd_hoatdong div_button">
-                    <img id = "Button_2" class="button"></br>
-                    <h4>Trạng thái auto</h4>
+                    <img id = "Button_2" class="button" onclick="socket.emit('Client-send-cmd-toggle', 'state_auto');">
+                    <h4>Chế độ hoạt động</h4>
                 </div>
             </div>
         </div>    

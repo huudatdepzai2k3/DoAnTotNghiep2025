@@ -73,10 +73,13 @@ function fn_tagRead() {
     });
 }
 
-function fn_Data_Write(tag, data) {
+// Ghi dữ liệu
+function fn_Data_Write(tag,data){
     tagBuilder.clean();
-    const payload = tagBuilder.write(tag, data).get();
-    iotGateway.write(payload);
+    const set_value = tagBuilder
+      .write(tag,data)
+      .get();
+    iotGateway.write(set_value);
 }
 
 ////////////////////// KẾT NỐI TWILIO //////////////////////
@@ -258,20 +261,20 @@ function fn_Alarm_Manage() {
 
 function fn_tag() {
     const tagData = {
-        run: tagArr[1],
-        auto: tagArr[2],
-        motor: tagArr[3],
-        sensor_1: tagArr[4],
-        sensor_2: tagArr[5],
-        sensor_3: tagArr[6],
-        sensor_4: tagArr[7],
-        sensor_5: tagArr[8],
-        sensor_detech: tagArr[9],
-        cylinder_1: tagArr[10],
-        cylinder_2: tagArr[11],
-        cylinder_3: tagArr[12],
-        cylinder_4: tagArr[13],
-        cylinder_5: tagArr[14]
+      run: tagArr[1],
+      auto: tagArr[2],
+      motor: tagArr[3],
+      sensor_1: tagArr[4],
+      sensor_2: tagArr[5],
+      sensor_3: tagArr[6],
+      sensor_4: tagArr[7],
+      sensor_5: tagArr[8],
+      sensor_detech: tagArr[9],
+      cylinder_1: tagArr[10],
+      cylinder_2: tagArr[11],
+      cylinder_3: tagArr[12],
+      cylinder_4: tagArr[13],
+      cylinder_5: tagArr[14]
     };
 
     io.sockets.emit("tag_data", tagData);
@@ -287,21 +290,22 @@ io.on("connection", (socket) => {
 
     // Xử lý toggle trạng thái tag
     socket.on("Client-send-cmd-toggle", (tag) => {
-        const index = tags.indexOf(tag);
+      const index = tags.indexOf(tag);
 
-        if (index === -1) {
-            console.error("❌ Không tìm thấy tag:", tag);
-            return;
-        }
+      if (index === -1) {
+          console.error("❌ Không tìm thấy tag:", tag);
+          io.emit("log", {
+              type: "error",
+              message: `❌ Không tìm thấy tag: ${tag}`
+          });
+          return;
+      }
 
-        const currentValue = typeof tagArr[index] === "number" ? tagArr[index] : 0;
-        const newValue = currentValue === 0 ? 1 : 0;
-
-        fn_Data_Write(tag, newValue);
-        io.emit("log", {
-            type: "info",
-            message: `🔁 Toggle tag: ${tag} = ${newValue}`
-        });
+      if (tagArr[index] == true) {
+        fn_Data_Write(tag, 0);
+      } else {
+        fn_Data_Write(tag, 1);
+      }
     });
 
     socket.on("msg_Alarm_Show", function () {

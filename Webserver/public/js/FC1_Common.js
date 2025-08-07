@@ -1,7 +1,7 @@
 ////////////// YÊU CẦU DỮ LIỆU TỪ SERVER- REQUEST DATA //////////////
 var myVar = setInterval(myTimer, 1000);
 function myTimer() {
-    socket.emit("Client-send-data", "Request data client");
+    socket.emit("Client-send-data", "Request data client"); 
 }
 
 // Hàm hiển thị dữ liệu lên IO Field
@@ -35,7 +35,7 @@ setInterval(() => {
 /////////////////////// NHẬN DỮ LIỆU TỪ SERVER ///////////////////////
 socket.on("tag_data", function (data) {
     // Gọi cập nhật biểu tượng cho từng tag
-    fn_SymbolStatus("Button_1", "light", data.run);
+    fn_SymbolStatus("Button_1", "Button", data.run);
     fn_SymbolStatus("Button_2", "Button", data.auto);
     fn_SymbolStatus("Conveyor_1", "Conveyor", data.motor);
     fn_SymbolStatus("Conveyor_2", "Conveyor", data.motor);
@@ -52,10 +52,6 @@ socket.on("tag_data", function (data) {
     fn_SymbolStatus("Xilanh_3", "Xilanh", data.cylinder_3);
     fn_SymbolStatus("Xilanh_4", "Xilanh", data.cylinder_4);
     fn_SymbolStatus("Xilanh_5", "Xilanh", data.cylinder_5);
-
-    document.getElementById("Button_2").addEventListener("click", function () {
-    socket.emit("Client-send-cmd-toggle", data.auto);
-    });
 });
 
 /////////////////// HIỂN THỊ TRẠNG THÁI SYMBOL THEO TAG ///////////////////
@@ -63,7 +59,7 @@ function fn_SymbolStatus(ObjectID, SymName, TagValue) {
     const element = document.getElementById(ObjectID);
     if (!element) return;
     let suffix = "0";  
-    if (TagValue === 1) suffix = "1";
+    if (TagValue === 1 || TagValue === true) suffix = "1";
     else if (TagValue === 2) suffix = "2";
     else suffix = "0";
 
