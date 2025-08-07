@@ -1,0 +1,13 @@
+#Screen_2{position:absolute;left:215px;top:11px;width:1200px;height:720px;background-color:rgb(107,140,77)}
+#div_table_Alarm{position:absolute;left:150px;top:200px;width:900px;height:300px;overflow-y:scroll;background-color:rgb(255,255,255)}
+#table_Alarm{position:absolute;width:100%;background-color:rgb(255,0,0);color:rgb(255,255,255)}
+#table_Alarm tr{cursor:pointer}
+#table_Alarm tr:hover{background-color:rgb(255,0,0)}
+#table_Alarm{overflow:auto}#tabtable_Alarmle_01 thead th{position:sticky;top:0}
+#table_Alarm{border-collapse:collapse;width:100%}#table_Alarm th,td{padding:8px 16px}
+#table_Alarm th{background:rgb(7,10,235)}
+#lb_AL_Search_Start{color:#1a1818;font-size:14px;font-weight:400;position:absolute;left:15px;top:5px}
+#dtpk_AL_Search_Start{text-align:left;position:absolute;left:15px;top:25px}
+#lb_AL_Search_End{color:#1a1818;font-size:14px;font-weight:400;position:absolute;left:15px;top:55px}
+#dtpk_AL_Search_End{text-align:left;position:absolute;left:15px;top:75px}
+#btt_AL_Search{border:none;background-color:#1e90ff;color:#fff;text-align:center;display:inline-block;font-size:11px;font-weight:700;cursor:pointer;position:absolute;width:105px;height:30px;left:127px;top:110px}

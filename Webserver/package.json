@@ -1,0 +1,28 @@
+{
+  "name": "webserver",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.2.1",
+    "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0",
+    "jquery": "^3.7.1",
+    "kepserverex-js": "^1.0.6",
+    "lodash": "^4.17.21",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.14.3",
+    "nodes7": "^0.3.18",
+    "request": "^2.88.2",
+    "socket.io": "^4.8.1",
+    "twilio": "^5.8.0"
+  }
+}

@@ -1,0 +1,18 @@
+#Screen_Main{position:absolute;left:215px;top:11px;width:1200px;height:720px;background-color:rgb(253,212,112)}
+#Conveyor_1{position:absolute;left:50px;top:400px;height:30px;width:500px}
+#Conveyor_2{position:absolute;left:400px;top:400px;height:30px;width:500px}
+#Conveyor_3{position:absolute;left:600px;top:400px;height:30px;width:500px}
+#Sensor_1,#Sensor_2,#Sensor_3,#Sensor_4,#Sensor_5,#Sensor_detech{position:absolute;height:50px;width:20px;top:320px}
+#Sensor_detech{left:200px}#Sensor_1{left:340px}#Sensor_2{left:480px}#Sensor_3{left:620px}#Sensor_4{left:760px}#Sensor_5{left:900px}
+#Xilanh_1,#Xilanh_2,#Xilanh_3,#Xilanh_4,#Xilanh_5{position:absolute;height:80px;width:80px;top:270px}
+#Xilanh_1{left:360px}#Xilanh_2{left:500px}#Xilanh_3{left:640px}#Xilanh_4{left:780px}#Xilanh_5{left:920px}
+.control_panel{position:absolute;right:0;top:0;width:360px;background:#f2f2f2;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);margin:20px 20px 0 0}
+.control_panel>h2{text-align:center;font-size:20px;color:rgb(0,0,0)}
+.div_button{margin:10px;display:flex;flex-direction:column;align-items:center}
+.button{width:100px;height:100px}h1,h2,h3,h4,h5,h6,p{color:rgb(0,0,0);margin:10px;padding:0}
+.control_panel_content{display:flex}#Motor{position:absolute;left:50px;top:431px;height:80px;width:80px}
+#Panel_electric{position:absolute;left:50px;top:50px;height:200px;width:300px}
+#Webcam{position:absolute;left:210px;top:260px;height:100px;width:100px}
+#mang_phanloai_1,#mang_phanloai_2,#mang_phanloai_3,#mang_phanloai_4,#mang_phanloai_5{position:absolute;height:120px;width:100px;top:430px}
+#mang_phanloai_1{left:280px}#mang_phanloai_2{left:420px}#mang_phanloai_3{left:560px}#mang_phanloai_4{left:700px}#mang_phanloai_5{left:840px}
+#slot_1,#slot_2,#slot_3,#slot_4,#slot_5{position:absolute;height:100px;width:100px;top:550px}#slot_1{left:240px}#slot_2{left:380px}#slot_3{left:520px}#slot_4{left:660px}#slot_5{left:800px}

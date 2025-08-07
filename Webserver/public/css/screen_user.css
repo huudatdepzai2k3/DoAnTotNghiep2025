@@ -1,0 +1,4 @@
+#Screen_4 {position: absolute;left: 215px;top: 11px;width: 1200px;height: 720px;background-color: rgb(48, 179, 138);}
+#userTable { border-collapse: collapse; width: 800px;background: #fff;}
+#userTable th, #userTable td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+#userTable th { background-color: #f2f2f2; }
