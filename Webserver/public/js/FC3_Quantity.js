@@ -90,3 +90,12 @@ async function getDataAndDrawCharts() {
     alert("Không thể lấy dữ liệu từ server.");
   }
 }
+
+// cài ngày mặc định
+let today = new Date();
+let endDate = today.toISOString().split('T')[0];
+let pastDate = new Date();
+pastDate.setDate(today.getDate() - 7);
+let startDate = pastDate.toISOString().split('T')[0];
+document.getElementById("start_date").value = startDate;
+document.getElementById("end_date").value = endDate;
