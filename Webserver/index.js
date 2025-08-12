@@ -209,7 +209,7 @@ function fn_sql_alarm_insert(ID, AlarmName) {
 // /////////////////////////////// XÁC NHẬN HẾT CẢNH BÁO ///////////////////////////////
 // Hàm tự động xác nhận cảnh báo
 function fn_sql_alarm_ack(ID){
-    sqlcon.query("UPDATE alarm SET Status = 'IO' WHERE ID = ?", [ID], function (err, result) {
+    sqlcon.query("UPDATE alarm SET Status = 'IO' WHERE ID = ? AND Status = 'I'", [ID], function (err, result) {
         if (err) {
             console.error("❌ Lỗi cập nhật trạng thái alarm:", err.message);
         } else {
