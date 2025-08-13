@@ -289,7 +289,7 @@ class DemoApp(QWidget):
         self.camera_connected = self.capture.isOpened()
         self.last_camera_connected = False
          
-        self.yolo_model = YOLO("yolov8n.pt")  # Đường dẫn tới model đã huấn luyện
+        self.yolo_model = YOLO("best.pt")  
 
         self.last_qr_code = ""
         self.last_detection_time = time.time()
@@ -303,7 +303,7 @@ class DemoApp(QWidget):
         main_layout = QHBoxLayout()
 
         self.excel_btn = QPushButton("📂 Chọn file Excel")
-        self.excel_btn.clicked.connect(self.load_excel)  # Nút chọn file Excel
+        self.excel_btn.clicked.connect(self.load_excel)  
         self.excel_display = QTextEdit()
         self.excel_display.setReadOnly(True)
 
