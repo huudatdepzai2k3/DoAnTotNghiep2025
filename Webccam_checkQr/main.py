@@ -455,6 +455,8 @@ class DemoApp(QWidget):
                 self.log_to_terminal(f"❌ Lỗi tải Excel: {e}")
 
     def read_frame(self):
+        tinhtrang_send = None
+        tinhtrang = None
         if not self.capture.isOpened():
             self.check_camera_connection()
             return
@@ -481,7 +483,7 @@ class DemoApp(QWidget):
             tinhtrang = self.yolo_model.names[cls_id]
             x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-            color = (0, 255, 0) if tinhtrang != 'hàng rách' else (0, 0, 255)  # Đỏ nếu hỏng
+            color = (0, 255, 0) if tinhtrang != 'hang_rach' else (0, 0, 0)  
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
             cv2.putText(frame, f"{tinhtrang} {conf:.2f}", (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
@@ -500,13 +502,14 @@ class DemoApp(QWidget):
                     self.last_detection_time = time.time()
                     self.log_to_terminal(f"📷 Mã QR mới: {data}")
                     self.qr_label.setText(f"📦 Mã QR: {data}")
-                    if tinhtrang == 'hàng rách':
+                    if tinhtrang == 'hang_rach':
                         self.qr_label_2.setText("📦 Tình trạng hàng: Rách")
+                        tinhtrang_send == 'hàng rách'
                     else:
                         self.qr_label_2.setText("📦 Tình trạng hàng: Bình thường")
-                        tinhtrang = 'bình thường'
+                        tinhtrang_send = 'bình thường'
 
-                    get_position_from_file(data, tinhtrang)
+                    get_position_from_file(data, tinhtrang_send)
 
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
                 cv2.putText(frame, f"{data}", (x, y - 10),
