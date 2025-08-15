@@ -10,8 +10,8 @@ IGuiPage
 	height: 480
 	IGuiQmlRectangle
 	{
-		id: q671088693
-		objId: 671088693
+		id: q671088688
+		objId: 671088688
 		x: 0
 		y: 94
 		width: 798
@@ -108,8 +108,8 @@ IGuiPage
 	}
 	IGuiTextField
 	{
-		id: q268435524
-		objId: 268435524
+		id: q268435519
+		objId: 268435519
 		x: 364
 		y: 99
 		width: 72

@@ -224,15 +224,11 @@ class ConnectionMonitorThread(QThread):
     def run(self):
         global stop_threads
         while not stop_threads:
-            plc_status = is_connected(client)
-            web_status = is_connected_webserver()
-            mysql_status = is_connected_mysql()
-
-            if plc_status != self.last_plc_status or web_status != self.last_web_status or mysql_status != self.last_mysql_status:
-                self.status_updated.emit(plc_status, web_status, mysql_status)
-                self.last_plc_status = plc_status
-                self.last_web_status = web_status
-                self.last_mysql_status = mysql_status
+            if is_connected(client) != self.last_plc_status or is_connected_webserver() != self.last_web_status or is_connected_mysql() != self.last_mysql_status:
+                self.status_updated.emit(is_connected(client), is_connected_webserver(), is_connected_mysql())
+                self.last_plc_status = is_connected(client)
+                self.last_web_status = is_connected_webserver()
+                self.last_mysql_status = is_connected_mysql()
 
             if is_connected_mysql():
                 # Ghi lại dữ liệu từ product_log.csv (nếu có)
@@ -250,9 +246,7 @@ class ConnectionMonitorThread(QThread):
                     # Ghi xong toàn bộ thì xóa file
                     os.remove(csv_file)
                     window.log_to_terminal("🗑️ Đã ghi lại và xóa file product_log.csv")
-
-            # Xử lý mất kết nối PLC
-            if not plc_status:
+            else:
                 window.log_to_terminal("🔄 Mất kết nối PLC. Thử kết nối lại...")
                 try:
                     if not client.get_connected():
@@ -261,18 +255,28 @@ class ConnectionMonitorThread(QThread):
                 except Exception as e:
                     window.log_to_terminal(f"❌ Lỗi kết nối lại PLC: {e}")
 
-            # Xử lý mất kết nối MySQL
-            if not mysql_status:
-                window.log_to_terminal("🔄 Mất kết nối MySQL. Thử kết nối lại...")
+            # Xử lý mất kết nối PLC
+            if not is_connected(client):
+                window.log_to_terminal("🔄 Mất kết nối PLC. Thử kết nối lại...")
                 try:
-                    conn = pymysql.connect(**db_config)
-                    if conn.open:
-                        window.log_to_terminal("✅ Đã kết nối lại MySQL thành công.")
-                    else:
-                        window.log_to_terminal("❌ Không thể kết nối lại MySQL.")
+                    if not client.get_connected():
+                        client.connect(plc_ip_current, RACK, SLOT)
+                        window.log_to_terminal("✅ Đã kết nối lại PLC thành công.")
                 except Exception as e:
-                    window.log_to_terminal(f"❌ Lỗi kết nối lại MySQL: {e}")
- 
+                    window.log_to_terminal(f"❌ Lỗi kết nối lại PLC: {e}")
+
+            # Xử lý mất kết nối Webserver
+            if not is_connected_webserver():
+                window.log_to_terminal("🔄 Mất kết nối Webserver. Thử kết nối lại...")
+                try:
+                    response = requests.get(WEBSERVER_URL)
+                    if response.status_code == 200:
+                        window.log_to_terminal("✅ Đã kết nối lại Webserver thành công.")
+                    else:
+                        window.log_to_terminal("❌ Không thể kết nối lại Webserver.")
+                except Exception as e:
+                    window.log_to_terminal(f"❌ Lỗi kết nối lại Webserver: {e}")
+
             time.sleep(5)
 
 # Lớp giao diện chính ứng dụng

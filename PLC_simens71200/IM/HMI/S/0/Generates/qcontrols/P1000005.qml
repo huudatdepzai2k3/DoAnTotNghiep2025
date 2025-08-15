@@ -383,7 +383,7 @@ IGuiPage
 		width: 64
 		height: 41
 		qm_BorderWidth: 2
-		qm_ImageSource: "image://QSmartImageProvider/45#2#4#128#0#0"
+		qm_ImageSource: "image://QSmartImageProvider/43#2#4#128#0#0"
 		qm_Border.top: 2
 		qm_Border.bottom: 2
 		qm_Border.right: 2
@@ -628,7 +628,7 @@ IGuiPage
 			width: 307
 			height: 38
 			qm_BorderWidth: 2
-			qm_ImageSource: "image://QSmartImageProvider/45#2#4#128#0#0"
+			qm_ImageSource: "image://QSmartImageProvider/43#2#4#128#0#0"
 			qm_Border.top: 2
 			qm_Border.bottom: 2
 			qm_Border.right: 2
@@ -650,7 +650,7 @@ IGuiPage
 			width: 323
 			height: 38
 			qm_BorderWidth: 2
-			qm_ImageSource: "image://QSmartImageProvider/45#2#4#128#0#0"
+			qm_ImageSource: "image://QSmartImageProvider/43#2#4#128#0#0"
 			qm_Border.top: 2
 			qm_Border.bottom: 2
 			qm_Border.right: 2
@@ -743,7 +743,7 @@ IGuiPage
 		width: 25
 		height: 48
 		qm_BorderWidth: 2
-		qm_ImageSource: "image://QSmartImageProvider/45#2#4#128#0#0"
+		qm_ImageSource: "image://QSmartImageProvider/43#2#4#128#0#0"
 		qm_Border.top: 2
 		qm_Border.bottom: 2
 		qm_Border.right: 2
@@ -765,7 +765,7 @@ IGuiPage
 		width: 25
 		height: 48
 		qm_BorderWidth: 2
-		qm_ImageSource: "image://QSmartImageProvider/45#2#4#128#0#0"
+		qm_ImageSource: "image://QSmartImageProvider/43#2#4#128#0#0"
 		qm_Border.top: 2
 		qm_Border.bottom: 2
 		qm_Border.right: 2
@@ -787,7 +787,7 @@ IGuiPage
 		width: 25
 		height: 48
 		qm_BorderWidth: 2
-		qm_ImageSource: "image://QSmartImageProvider/45#2#4#128#0#0"
+		qm_ImageSource: "image://QSmartImageProvider/43#2#4#128#0#0"
 		qm_Border.top: 2
 		qm_Border.bottom: 2
 		qm_Border.right: 2
@@ -834,7 +834,7 @@ IGuiPage
 		width: 25
 		height: 48
 		qm_BorderWidth: 2
-		qm_ImageSource: "image://QSmartImageProvider/45#2#4#128#0#0"
+		qm_ImageSource: "image://QSmartImageProvider/43#2#4#128#0#0"
 		qm_Border.top: 2
 		qm_Border.bottom: 2
 		qm_Border.right: 2
@@ -856,7 +856,7 @@ IGuiPage
 		width: 25
 		height: 48
 		qm_BorderWidth: 2
-		qm_ImageSource: "image://QSmartImageProvider/45#2#4#128#0#0"
+		qm_ImageSource: "image://QSmartImageProvider/43#2#4#128#0#0"
 		qm_Border.top: 2
 		qm_Border.bottom: 2
 		qm_Border.right: 2
