@@ -29,7 +29,7 @@ function initSqlConnection() {
             password: "123456",
             database: "sql_plc",
             port: 3306,
-            charset: "utf8mb4"
+            charset: "utf8mb4",
         });
 
         sqlcon.connect(err => {
@@ -862,18 +862,35 @@ app.get("/api/chart-data", (req, res) => {
     });
 
     const historicalQuery = {
-        day: `SELECT DATE(sorted_time) AS label, COUNT(*) AS total FROM qr_sorted_log WHERE sorted_time BETWEEN ? AND ? GROUP BY DATE(sorted_time)`,
-        month: `SELECT DATE_FORMAT(sorted_time, '%Y-%m') AS label, COUNT(*) AS total FROM qr_sorted_log WHERE sorted_time BETWEEN ? AND ? GROUP BY label`,
-        year: `SELECT DATE_FORMAT(sorted_time, '%Y') AS label, COUNT(*) AS total FROM qr_sorted_log WHERE sorted_time BETWEEN ? AND ? GROUP BY label`
+        day: `SELECT DATE_FORMAT(sorted_time, '%Y-%m-%d') AS label, COUNT(*) AS total 
+              FROM qr_sorted_log 
+              WHERE sorted_time BETWEEN ? AND ? 
+              GROUP BY label`,
+        month: `SELECT DATE_FORMAT(sorted_time, '%Y-%m') AS label, COUNT(*) AS total 
+                FROM qr_sorted_log 
+                WHERE sorted_time BETWEEN ? AND ? 
+                GROUP BY label`,
+        year: `SELECT DATE_FORMAT(sorted_time, '%Y') AS label, COUNT(*) AS total 
+              FROM qr_sorted_log 
+              WHERE sorted_time BETWEEN ? AND ? 
+              GROUP BY label`
     }[mode];
 
+    let endDateTime;
+    if (mode === 'day') {
+        endDateTime = end + ' 23:59:59';
+    } else {
+        endDateTime = end;
+    }
+
     const historyTask = (start && end && historicalQuery) ? new Promise((resolve, reject) => {
-        sqlcon.query(historicalQuery, [start, end], (err, results) => {
+        sqlcon.query(historicalQuery, [start, endDateTime], (err, results) => {
             if (err) return reject(err);
             finalData.history = results;
             resolve();
         });
     }) : Promise.resolve();
+
 
     Promise.all([...positionTasks, pie1, pie2, historyTask])
         .then(() => res.json(finalData))

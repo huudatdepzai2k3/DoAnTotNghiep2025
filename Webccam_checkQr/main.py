@@ -94,13 +94,28 @@ def insert_qr_sorting(qr_code, address, tinhtrang, position, sorted_time=None):
     try:
         conn = pymysql.connect(**db_config)
         cursor = conn.cursor()
-        sql = """
-            INSERT INTO qr_sorted_log (sorted_time, qr_code, address, tinhtrang, position)
-            VALUES (%s, %s, %s, %s, %s)
-        """
-        values = (sorted_time, qr_code, address, tinhtrang, position)
-        cursor.execute(sql, values)
-        conn.commit()
+
+        sql = """SELECT 1 FROM qr_sorted_log WHERE qr_code=%s LIMIT 1"""
+        cursor.execute(sql, (qr_code,))
+        result = cursor.fetchone()
+
+        if result is not None:
+            sql = """
+                UPDATE qr_sorted_log
+                SET sorted_time=%s, address=%s, tinhtrang=%s, position=%s
+                WHERE qr_code=%s
+            """
+            values = (sorted_time, address, tinhtrang, position, qr_code)
+            cursor.execute(sql, values)
+            conn.commit()
+        else:
+            sql = """
+                INSERT INTO qr_sorted_log (sorted_time, qr_code, address, tinhtrang, position)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            values = (sorted_time, qr_code, address, tinhtrang, position)
+            cursor.execute(sql, values)
+            conn.commit()
 
         window.log_to_terminal(f"✅ Ghi thành công QR: {qr_code} vào MySQL lúc {sorted_time}")
     except (pymysql.MySQLError, Exception) as e:
@@ -138,7 +153,7 @@ def send_data_to_plc_SQL(qr_code, address, tinhtrang, position):
                 data_push_1 = client.db_read(DB_NUMBER,2,1)
                 snap7.util.set_bool(data_push_1, 0, 0, True)
                 client.db_write(DB_NUMBER,2,data_push_1)
-                time.sleep(0.5)
+                time.sleep(0.2)
                 snap7.util.set_bool(data_push_1, 0, 0, False)
                 client.db_write(DB_NUMBER,2,data_push_1)
                 window.log_to_terminal(f"📤 Gửi vị trí vào PLC: {position}")
@@ -508,7 +523,7 @@ class DemoApp(QWidget):
                     self.qr_label.setText(f"📦 Mã QR: {data}")
                     if tinhtrang == 'hang_rach':
                         self.qr_label_2.setText("📦 Tình trạng hàng: Rách")
-                        tinhtrang_send == 'hàng rách'
+                        tinhtrang_send = 'hàng rách'
                     else:
                         self.qr_label_2.setText("📦 Tình trạng hàng: Bình thường")
                         tinhtrang_send = 'bình thường'

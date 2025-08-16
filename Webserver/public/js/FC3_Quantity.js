@@ -58,7 +58,7 @@ async function getDataAndDrawCharts() {
     });
 
     if (data.history.length > 0) {
-      const xValues_3 = data.history.map(r => r.label);
+      const xValues_3 = data.history.map(r => r.label.replace('T', ' ').replace('Z', ''));
       const yValues_3 = data.history.map(r => r.total);
       const max_val = Math.max(...yValues_3);
 
