@@ -30,6 +30,7 @@ function initSqlConnection() {
             database: "sql_plc",
             port: 3306,
             charset: "utf8mb4",
+            timezone: '+07:00'
         });
 
         sqlcon.connect(err => {
@@ -665,13 +666,18 @@ app.get("/api/search", (req, res) => {
     const qr = req.query.qr;
     if (!qr) return res.status(400).json({ error: "Thiếu mã QR" });
 
-    const query = `SELECT sorted_time, qr_code, address, tinhtrang FROM qr_sorted_log WHERE qr_code = ? ORDER BY sorted_time DESC LIMIT 1`;
+    const query = `
+        SELECT DATE_FORMAT(CONVERT_TZ(sorted_time, '+00:00', '+00:00'), '%H:%i:%s %d/%m/%Y') AS sorted_time,
+        qr_code,address,tinhtrang FROM qr_sorted_log WHERE qr_code = ? ORDER BY sorted_time DESC LIMIT 1
+    `;
+
     sqlcon.query(query, [qr], (err, results) => {
         if (err) return res.status(500).json({ error: "Lỗi truy vấn SQL" });
         if (results.length === 0) return res.json({ found: false });
         res.json({ found: true, data: results[0] });
     });
 });
+
 
 app.get("/api/sorted-table", (req, res) => {
   const { from, to } = req.query;
