@@ -24,7 +24,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
    
     <script>
-        var socket = io("127.0.0.1:3000") 
+        var socket = io("127.0.0.1:3000");
     </script>
 
     <!-- ////////////// CHƯƠNG TRÌNH ĐĂNG NHẬP HỆ THỐNG //////////////  -->
@@ -282,7 +282,7 @@
             <h2>Điều khiển và trạng thái hệ thống</h2>
             <div class="control_panel_content">
                 <div class="state_all div_button">
-                    <img id="Button_1" class="button" onclick="socket.emit('Client-send-cmd-toggle', 'state_run');">
+                    <img id="Button_1" class="button" onclick="socket.emit('Client-send-cmd-toggle', 'state_emergency_stop');">
                     <h4>Nút dừng khẩn cấp</h4>
                 </div>
                 <div class="cd_hoatdong div_button">

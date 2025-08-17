@@ -25,7 +25,7 @@ function fn_ScreenChange(scr_1, scr_2, scr_3, scr_4, scr_5)
     document.getElementById(scr_5).style.visibility = 'hidden';   
 }
 
-const socket = io();
+var socket = io();
 
 ////////////// YÊU CẦU DỮ LIỆU TỪ SERVER - REQUEST DATA //////////////
 setInterval(() => {
@@ -35,8 +35,8 @@ setInterval(() => {
 /////////////////////// NHẬN DỮ LIỆU TỪ SERVER ///////////////////////
 socket.on("tag_data", function (data) {
     // Gọi cập nhật biểu tượng cho từng tag
-    fn_SymbolStatus("Button_1", "Button", data.run);
-    fn_SymbolStatus("Button_2", "Button", data.auto);
+    fn_SymbolStatus("Button_1", "Button", data.emergency_stop);
+    fn_SymbolStatus("Button_2", "Light", data.auto);
     fn_SymbolStatus("Conveyor_1", "Conveyor", data.motor);
     fn_SymbolStatus("Conveyor_2", "Conveyor", data.motor);
     fn_SymbolStatus("Conveyor_3", "Conveyor", data.motor);

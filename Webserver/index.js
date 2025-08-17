@@ -57,7 +57,7 @@ const tagBuilder = new TagBuilder({ namespace: "Channel1.Device1" });
 const iotGateway = new IotGateway({ host: "127.0.0.1", port: 5000 });
 
 const tags = [
-  "sql_insert_Trigger", "state_run", "state_auto", "state_motor",
+  "sql_insert_Trigger", "state_emergency_stop", "state_auto", "state_motor",
   "state_sensor_1", "state_sensor_2", "state_sensor_3", "state_sensor_4",
   "state_sensor_5", "state_sensor_detech",
   "state_cylinder_1", "state_cylinder_2", "state_cylinder_3", "state_cylinder_4", "state_cylinder_5",
@@ -253,7 +253,7 @@ function fn_Alarm_Manage() {
 
 function fn_tag() {
   const tagData = {
-    run: tagArr[1],
+    emergency_stop: tagArr[1],
     auto: tagArr[2],
     motor: tagArr[3],
     sensor_1: tagArr[4],
@@ -282,17 +282,9 @@ io.on("connection", (socket) => {
 
   // Xử lý sự kiện từ client và toggle trực tiếp
   socket.on("Client-send-cmd-toggle", async (tag) => {
-    const index = tags.indexOf(tag);
-    if (index === -1) {
-      console.error("❌ Không tìm thấy tag:", tag);
-      io.emit("log", { type: "error", message: `❌ Không tìm thấy tag: ${tag}` });
-      return;
-    }
 
     try {
-      // Đọc giá trị hiện tại từ KepServer
-      await fn_tagRead();
-      const currentValue = tagArr[index];
+      const currentValue = tagData[tag];
       const newValue = currentValue ? 0 : 1; // toggle 0 ↔ 1
 
       // Ghi giá trị mới lên KepServer
