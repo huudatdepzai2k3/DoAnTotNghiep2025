@@ -22,32 +22,32 @@ app.get("/", (req, res) => res.render("home"));
 let sqlcon;
 
 function initSqlConnection() {
-    function connect() {
-        sqlcon = mysql.createConnection({
-            host: "127.0.0.1",
-            user: "admin",
-            password: "123456",
-            database: "sql_plc",
-            port: 3306,
-            charset: "utf8mb4",
-            timezone: '+07:00'
-        });
+  function connect() {
+    sqlcon = mysql.createConnection({
+      host: "127.0.0.1",
+      user: "admin",
+      password: "123456",
+      database: "sql_plc",
+      port: 3306,
+      charset: "utf8mb4",
+      timezone: '+07:00'
+    });
 
-        sqlcon.connect(err => {
-            if (err) {
-                console.log("❌ MySQL lỗi, thử lại sau 2s");
-                setTimeout(connect, 2000);
-            } else {
-                console.log("✅ MySQL đã kết nối");
-            }
-        });
+    sqlcon.connect(err => {
+      if (err) {
+        console.log("❌ MySQL lỗi, thử lại sau 2s");
+        setTimeout(connect, 2000);
+      } else {
+        console.log("✅ MySQL đã kết nối");
+      }
+    });
 
-        sqlcon.on("error", err => {
-            if (err.code === "PROTOCOL_CONNECTION_LOST") connect();
-            else throw err;
-        });
-    }
-    connect();
+    sqlcon.on("error", err => {
+      if (err.code === "PROTOCOL_CONNECTION_LOST") connect();
+      else throw err;
+    });
+  }
+  connect();
 }
 
 initSqlConnection();
@@ -57,30 +57,21 @@ const tagBuilder = new TagBuilder({ namespace: "Channel1.Device1" });
 const iotGateway = new IotGateway({ host: "127.0.0.1", port: 5000 });
 
 const tags = [
-    "sql_insert_Trigger", "state_run", "state_auto", "state_motor",
-    "state_sensor_1", "state_sensor_2", "state_sensor_3", "state_sensor_4",
-    "state_sensor_5", "state_sensor_detech",
-    "state_cylinder_1", "state_cylinder_2", "state_cylinder_3", "state_cylinder_4", "state_cylinder_5",
-    "cylinder1_tripped", "cylinder2_tripped", "cylinder3_tripped", "cylinder4_tripped", "cylinder5_tripped",
-    "motor_tripped"
+  "sql_insert_Trigger", "state_run", "state_auto", "state_motor",
+  "state_sensor_1", "state_sensor_2", "state_sensor_3", "state_sensor_4",
+  "state_sensor_5", "state_sensor_detech",
+  "state_cylinder_1", "state_cylinder_2", "state_cylinder_3", "state_cylinder_4", "state_cylinder_5",
+  "cylinder1_tripped", "cylinder2_tripped", "cylinder3_tripped", "cylinder4_tripped", "cylinder5_tripped",
+  "motor_tripped"
 ];
 
 const TagList = tags.reduce((tb, tag) => tb.read(tag), tagBuilder).get();
 let tagArr = [];
 
 function fn_tagRead() {
-    return iotGateway.read(TagList).then(data => {
-        tagArr = lodash.map(data, item => item.v);
-    });
-}
-
-// Ghi dữ liệu
-function fn_Data_Write(tag,data){
-    tagBuilder.clean();
-    const set_value = tagBuilder
-      .write(tag,data)
-      .get();
-    iotGateway.write(set_value);
+  return iotGateway.read(TagList).then(data => {
+    tagArr = lodash.map(data, item => item.v);
+  });
 }
 
 ////////////////////// KẾT NỐI TWILIO //////////////////////
@@ -138,252 +129,263 @@ var values_old = [];
 
 // Hàm so sánh 2 mảng theo giá trị
 function arraysEqual(a, b) {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) return false;
-    }
-    return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
 // Hàm ghi dữ liệu vào MySQL nếu trạng thái mới khác trạng thái cũ
 function fn_sql_insert() {
-    const tzoffset = new Date().getTimezoneOffset() * 60000;
-    const timeNow = new Date(Date.now() - tzoffset).toISOString().slice(0, -1).replace("T", " ");
+  const tzoffset = new Date().getTimezoneOffset() * 60000;
+  const timeNow = new Date(Date.now() - tzoffset).toISOString().slice(0, -1).replace("T", " ");
 
-    const values = [
-        tagArr[1], tagArr[2], tagArr[3], tagArr[4], tagArr[5],
-        tagArr[6], tagArr[7], tagArr[8], tagArr[9], tagArr[10],
-        tagArr[11], tagArr[12], tagArr[13], tagArr[14]
-    ];
+  const values = [
+    tagArr[1], tagArr[2], tagArr[3], tagArr[4], tagArr[5],
+    tagArr[6], tagArr[7], tagArr[8], tagArr[9], tagArr[10],
+    tagArr[11], tagArr[12], tagArr[13], tagArr[14]
+  ];
 
-    if (!arraysEqual(values, values_old)) {
-        const sql = `
-            INSERT INTO plc_data (
-                date_time, data_run, data_auto, data_motor,
-                data_sensor_1, data_sensor_2, data_sensor_3, data_sensor_4, data_sensor_5, data_sensor_detech,
-                data_cylinder_1, data_cylinder_2, data_cylinder_3, data_cylinder_4, data_cylinder_5
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
+  if (!arraysEqual(values, values_old)) {
+    const sql = `
+      INSERT INTO plc_data (
+        date_time, data_run, data_auto, data_motor,
+        data_sensor_1, data_sensor_2, data_sensor_3, data_sensor_4, data_sensor_5, data_sensor_detech,
+        data_cylinder_1, data_cylinder_2, data_cylinder_3, data_cylinder_4, data_cylinder_5
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
-        const fullValues = [timeNow, ...values];
-        values_old = [...values];
+    const fullValues = [timeNow, ...values];
+    values_old = [...values];
 
-        sqlcon.query(sql, fullValues, err => {
-            if (err) {
-                console.error("❌ SQL INSERT error:", err);
-            } else {
-                console.log("✅ SQL ghi dữ liệu trạng thái mới thành công");
-            }
-        });
-    }
+    sqlcon.query(sql, fullValues, err => {
+      if (err) {
+        console.error("❌ SQL INSERT error:", err);
+      } else {
+        console.log("✅ SQL ghi dữ liệu trạng thái mới thành công");
+      }
+    });
+  }
 }
 
 // /////////////////////////////// GHI CẢNH BÁO VÀO DATABASE ///////////////////////////////
 function fn_sql_alarm_insert(ID, AlarmName) {
-    const checkSql = "SELECT * FROM alarm WHERE ID = ? AND Status = 'I'";
-    sqlcon.query(checkSql, [ID], (err, result) => {
-        if (err) {
-            console.error("❌ Lỗi kiểm tra alarm:", err.message);
-            io.emit("log", { type: "error", message: `❌ Kiểm tra alarm lỗi: ${err.message}` });
-            return;
-        }
+  const checkSql = "SELECT * FROM alarm WHERE ID = ? AND Status = 'I'";
+  sqlcon.query(checkSql, [ID], (err, result) => {
+    if (err) {
+      console.error("❌ Lỗi kiểm tra alarm:", err.message);
+      io.emit("log", { type: "error", message: `❌ Kiểm tra alarm lỗi: ${err.message}` });
+      return;
+    }
 
-        // Nếu alarm đã tồn tại và chưa xác nhận thì không ghi tiếp
-        if (result.length > 0) return;
+    // Nếu alarm đã tồn tại và chưa xác nhận thì không ghi tiếp
+    if (result.length > 0) return;
 
-        const sql = "INSERT INTO alarm (date_time, ID, Status, AlarmName) VALUES (?, ?, ?, ?)";
-        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
-        const timeNow = new Date(Date.now() - tzoffset).toISOString().slice(0, -1).replace("T", " ");
-        const values = [timeNow, ID, 'I', AlarmName];
+    const sql = "INSERT INTO alarm (date_time, ID, Status, AlarmName) VALUES (?, ?, ?, ?)";
+    const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+    const timeNow = new Date(Date.now() - tzoffset).toISOString().slice(0, -1).replace("T", " ");
+    const values = [timeNow, ID, 'I', AlarmName];
 
-        sqlcon.query(sql, values, (err) => {
-            if (err) {
-                console.error("❌ Lỗi ghi alarm:", err.message);
-                io.emit("log", { type: "error", message: `❌ Ghi alarm lỗi: ${err.message}` });
-            } else {
-                io.emit("log", { type: "info", message: `🆘 Ghi cảnh báo mới: ID ${ID} - ${AlarmName}` });
-            }
-        });
+    sqlcon.query(sql, values, (err) => {
+      if (err) {
+        console.error("❌ Lỗi ghi alarm:", err.message);
+        io.emit("log", { type: "error", message: `❌ Ghi alarm lỗi: ${err.message}` });
+      } else {
+        io.emit("log", { type: "info", message: `🆘 Ghi cảnh báo mới: ID ${ID} - ${AlarmName}` });
+      }
     });
+  });
 }
 
 // /////////////////////////////// XÁC NHẬN HẾT CẢNH BÁO ///////////////////////////////
 // Hàm tự động xác nhận cảnh báo
 function fn_sql_alarm_ack(ID){
-    sqlcon.query("UPDATE alarm SET Status = 'IO' WHERE ID = ? AND Status = 'I'", [ID], function (err, result) {
-        if (err) {
-            console.error("❌ Lỗi cập nhật trạng thái alarm:", err.message);
-        } else {
-            console.log(`✅ Đã cập nhật trạng thái ID ${ID} thành 'IO'. Affected rows: ${result.affectedRows}`);
-        }
-    });
+  sqlcon.query("UPDATE alarm SET Status = 'IO' WHERE ID = ? AND Status = 'I'", [ID], function (err, result) {
+    if (err) {
+      console.error("❌ Lỗi cập nhật trạng thái alarm:", err.message);
+    } else {
+      console.log(`✅ Đã cập nhật trạng thái ID ${ID} thành 'IO'. Affected rows: ${result.affectedRows}`);
+    }
+  });
 }
 // /////////////////////////// TRẠNG THÁI CẢNH BÁO TRƯỚC ĐÓ ///////////////////////////
 const alarmStates = [
-    { id: 1, name: "xi lanh 1 sự cố", prev: false },
-    { id: 2, name: "xi lanh 2 sự cố", prev: false },
-    { id: 3, name: "xi lanh 3 sự cố", prev: false },
-    { id: 4, name: "xi lanh 4 sự cố", prev: false },
-    { id: 5, name: "xi lanh 5 sự cố", prev: false },
-    { id: 6, name: "động cơ băng tải sự cố", prev: false }, 
+  { id: 1, name: "xi lanh 1 sự cố", prev: false },
+  { id: 2, name: "xi lanh 2 sự cố", prev: false },
+  { id: 3, name: "xi lanh 3 sự cố", prev: false },
+  { id: 4, name: "xi lanh 4 sự cố", prev: false },
+  { id: 5, name: "xi lanh 5 sự cố", prev: false },
+  { id: 6, name: "động cơ băng tải sự cố", prev: false }, 
 ];
 
 // /////////////////////////// HÀM QUẢN LÝ CẢNH BÁO TOÀN HỆ THỐNG ///////////////////////////
 function fn_Alarm_Manage() {
-    const tagalarmData = {
-        cylinder1_tripped : tagArr[15],
-        cylinder2_tripped : tagArr[16],
-        cylinder3_tripped : tagArr[17],
-        cylinder4_tripped : tagArr[18],
-        cylinder5_tripped : tagArr[19],
-        motor_tripped     : tagArr[20],
-    };
+  const tagalarmData = {
+    cylinder1_tripped : tagArr[15],
+    cylinder2_tripped : tagArr[16],
+    cylinder3_tripped : tagArr[17],
+    cylinder4_tripped : tagArr[18],
+    cylinder5_tripped : tagArr[19],
+    motor_tripped     : tagArr[20],
+  };
 
-    const tagValues = Object.values(tagalarmData);
+  const tagValues = Object.values(tagalarmData);
 
-    alarmStates.forEach((alarm, index) => {
-        const current = tagValues[index] ?? false;
+  alarmStates.forEach((alarm, index) => {
+    const current = tagValues[index] ?? false;
 
-        // Kiểm tra thay đổi trạng thái
-        if (current !== alarm.prev) {
-            if (current === true) {
-                fn_sql_alarm_insert(alarm.id, alarm.name);
-            } else {
-                fn_sql_alarm_ack(alarm.id);
-            }
+    // Kiểm tra thay đổi trạng thái
+    if (current !== alarm.prev) {
+      if (current === true) {
+        fn_sql_alarm_insert(alarm.id, alarm.name);
+      } else {
+        fn_sql_alarm_ack(alarm.id);
+      }
 
-            // Cập nhật trạng thái hiện tại
-            alarm.prev = current;
-        }
-    });
+      // Cập nhật trạng thái hiện tại
+      alarm.prev = current;
+    }
+  });
 }
 
 ////////////////////// SOCKET.IO //////////////////////
 
 function fn_tag() {
-    const tagData = {
-      run: tagArr[1],
-      auto: tagArr[2],
-      motor: tagArr[3],
-      sensor_1: tagArr[4],
-      sensor_2: tagArr[5],
-      sensor_3: tagArr[6],
-      sensor_4: tagArr[7],
-      sensor_5: tagArr[8],
-      sensor_detech: tagArr[9],
-      cylinder_1: tagArr[10],
-      cylinder_2: tagArr[11],
-      cylinder_3: tagArr[12],
-      cylinder_4: tagArr[13],
-      cylinder_5: tagArr[14]
-    };
+  const tagData = {
+    run: tagArr[1],
+    auto: tagArr[2],
+    motor: tagArr[3],
+    sensor_1: tagArr[4],
+    sensor_2: tagArr[5],
+    sensor_3: tagArr[6],
+    sensor_4: tagArr[7],
+    sensor_5: tagArr[8],
+    sensor_detech: tagArr[9],
+    cylinder_1: tagArr[10],
+    cylinder_2: tagArr[11],
+    cylinder_3: tagArr[12],
+    cylinder_4: tagArr[13],
+    cylinder_5: tagArr[14]
+  };
 
-    io.sockets.emit("tag_data", tagData);
+  io.sockets.emit("tag_data", tagData);
 }
 
 io.on("connection", (socket) => {
-    console.log("🟢 Client đã kết nối");
+  console.log("🟢 Client đã kết nối");
 
-    // Gửi dữ liệu tag khi client yêu cầu
-    socket.on("Client-send-data", () => {
-        fn_tag();
-    });
+  // Gửi dữ liệu tag khi client yêu cầu
+  socket.on("Client-send-data", () => {
+    fn_tag();
+  });
 
-    // Xử lý toggle trạng thái tag
-    socket.on("Client-send-cmd-toggle", (tag) => {
-      const index = tags.indexOf(tag);
+  // Xử lý sự kiện từ client và toggle trực tiếp
+  socket.on("Client-send-cmd-toggle", async (tag) => {
+    const index = tags.indexOf(tag);
+    if (index === -1) {
+      console.error("❌ Không tìm thấy tag:", tag);
+      io.emit("log", { type: "error", message: `❌ Không tìm thấy tag: ${tag}` });
+      return;
+    }
 
-      if (index === -1) {
-          console.error("❌ Không tìm thấy tag:", tag);
-          io.emit("log", {
-              type: "error",
-              message: `❌ Không tìm thấy tag: ${tag}`
-          });
-          return;
-      }
+    try {
+      // Đọc giá trị hiện tại từ KepServer
+      await fn_tagRead();
+      const currentValue = tagArr[index];
+      const newValue = currentValue ? 0 : 1; // toggle 0 ↔ 1
 
-      if (tagArr[index] == true) {
-        fn_Data_Write(tag, 0);
+      // Ghi giá trị mới lên KepServer
+      tagBuilder.clean();
+      const set_value = tagBuilder.write(tag, newValue).get();
+      await iotGateway.write(set_value);
+
+      // Cập nhật trạng thái local
+      tagArr[index] = newValue;
+
+      console.log(`✅ Toggle tag "${tag}" thành công. Giá trị mới: ${newValue}`);
+      io.emit("log", { type: "success", message: `✅ Toggle tag ${tag} thành công` });
+    } catch (error) {
+      console.error(`❌ Lỗi toggle tag "${tag}":`, error);
+      io.emit("log", { type: "error", message: `❌ Lỗi toggle tag ${tag}` });
+    }
+  });
+
+  socket.on("msg_Alarm_Show", function () {
+    const query = "SELECT * FROM alarm WHERE Status = 'I';";
+    sqlcon.query(query, function (err, results) {
+      if (err) {
+        console.error("❌ Lỗi truy vấn alarm:", err.message);
+        socket.emit("log", { type: "error", message: "Lỗi truy vấn alarm từ CSDL." });
       } else {
-        fn_Data_Write(tag, 1);
+        const alarms = results.map(row => ({ ...row }));
+        socket.emit("Alarm_Show", alarms);
       }
     });
-
-    socket.on("msg_Alarm_Show", function () {
-        const query = "SELECT * FROM alarm WHERE Status = 'I';";
-        sqlcon.query(query, function (err, results) {
-            if (err) {
-                console.error("❌ Lỗi truy vấn alarm:", err.message);
-                socket.emit("log", { type: "error", message: "Lỗi truy vấn alarm từ CSDL." });
-            } else {
-                const alarms = results.map(row => ({ ...row }));
-                socket.emit("Alarm_Show", alarms);
-            }
-        });
-    });
+  });
 
 
-    // Tìm kiếm alarm theo khoảng thời gian 
-    socket.on("msg_Alarm_ByTime", (data) => {
-        try {
-            const [startTimeRaw, endTimeRaw] = data;
-            const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+  // Tìm kiếm alarm theo khoảng thời gian 
+  socket.on("msg_Alarm_ByTime", (data) => {
+    try {
+      const [startTimeRaw, endTimeRaw] = data;
+      const tzoffset = (new Date()).getTimezoneOffset() * 60000;
 
-            const timeS = new Date(new Date(startTimeRaw) - tzoffset);
-            const timeE = new Date(new Date(endTimeRaw) - tzoffset);
+      const timeS = new Date(new Date(startTimeRaw) - tzoffset);
+      const timeE = new Date(new Date(endTimeRaw) - tzoffset);
 
-            const timeSStr = timeS.toISOString().slice(0, 19).replace("T", " ");
-            const timeEStr = timeE.toISOString().slice(0, 19).replace("T", " ");
+      const timeSStr = timeS.toISOString().slice(0, 19).replace("T", " ");
+      const timeEStr = timeE.toISOString().slice(0, 19).replace("T", " ");
 
-            const query = `SELECT * FROM alarm WHERE date_time BETWEEN ? AND ? ORDER BY date_time DESC`;
+      const query = `SELECT * FROM alarm WHERE date_time BETWEEN ? AND ? ORDER BY date_time DESC`;
 
-            sqlcon.query(query, [timeSStr, timeEStr], (err, results) => {
-                if (err) {
-                    console.error("❌ Lỗi truy vấn theo thời gian:", err);
-                    return;
-                }
-
-                socket.emit("Alarm_ByTime", results.map(row => ({ ...row })));
-            });
-        } catch (error) {
-            console.error("❌ Lỗi xử lý thời gian:", error);
+      sqlcon.query(query, [timeSStr, timeEStr], (err, results) => {
+        if (err) {
+            console.error("❌ Lỗi truy vấn theo thời gian:", err);
+            return;
         }
-    });
 
-    // Log khi client ngắt kết nối
-    socket.on("disconnect", () => {
-        console.log("🔴 Client đã ngắt kết nối");
-    });
+        socket.emit("Alarm_ByTime", results.map(row => ({ ...row })));
+      });
+    } catch (error) {
+      console.error("❌ Lỗi xử lý thời gian:", error);
+    }
+  });
+
+  // Log khi client ngắt kết nối
+  socket.on("disconnect", () => {
+      console.log("🔴 Client đã ngắt kết nối");
+  });
 });
 
 ////////////////////// API //////////////////////
 app.use(express.json());
 // Đăng nhập người dùng qua username hoặc phone
 app.get("/api/login", (req, res) => {
-    const { user, pass } = req.query;
-    if (!user || !pass) {
-        return res.status(400).json({ error: "Thiếu thông tin đăng nhập" });
+  const { user, pass } = req.query;
+  if (!user || !pass) {
+    return res.status(400).json({ error: "Thiếu thông tin đăng nhập" });
+  }
+
+  const sql = `
+    SELECT username, phone_number, role 
+    FROM users 
+    WHERE (username = ? OR phone_number = ?) AND password = ?
+    LIMIT 1
+  `;
+
+  sqlcon.query(sql, [user, user, pass], (err, results) => {
+    if (err) {
+      console.error("❌ Lỗi truy vấn đăng nhập:", err);
+      return res.status(500).json({ error: "Lỗi máy chủ" });
     }
 
-    const sql = `
-        SELECT username, phone_number, role 
-        FROM users 
-        WHERE (username = ? OR phone_number = ?) AND password = ?
-        LIMIT 1
-    `;
+    if (results.length === 0) {
+      return res.status(401).json({ error: "Sai tài khoản hoặc mật khẩu" });
+    }
 
-    sqlcon.query(sql, [user, user, pass], (err, results) => {
-        if (err) {
-            console.error("❌ Lỗi truy vấn đăng nhập:", err);
-            return res.status(500).json({ error: "Lỗi máy chủ" });
-        }
-
-        if (results.length === 0) {
-            return res.status(401).json({ error: "Sai tài khoản hoặc mật khẩu" });
-        }
-
-        res.json({ success: true, user: results[0] });
-    });
+    res.json({ success: true, user: results[0] });
+  });
 });
 
 
@@ -667,14 +669,14 @@ app.get("/api/search", (req, res) => {
     if (!qr) return res.status(400).json({ error: "Thiếu mã QR" });
 
     const query = `
-        SELECT DATE_FORMAT(CONVERT_TZ(sorted_time, '+00:00', '+00:00'), '%H:%i:%s %d/%m/%Y') AS sorted_time,
-        qr_code,address,tinhtrang FROM qr_sorted_log WHERE qr_code = ? ORDER BY sorted_time DESC LIMIT 1
+      SELECT DATE_FORMAT(CONVERT_TZ(sorted_time, '+00:00', '+00:00'), '%H:%i:%s %d/%m/%Y') AS sorted_time,
+      qr_code,address,tinhtrang FROM qr_sorted_log WHERE qr_code = ? ORDER BY sorted_time DESC LIMIT 1
     `;
 
     sqlcon.query(query, [qr], (err, results) => {
-        if (err) return res.status(500).json({ error: "Lỗi truy vấn SQL" });
-        if (results.length === 0) return res.json({ found: false });
-        res.json({ found: true, data: results[0] });
+      if (err) return res.status(500).json({ error: "Lỗi truy vấn SQL" });
+      if (results.length === 0) return res.json({ found: false });
+      res.json({ found: true, data: results[0] });
     });
 });
 
@@ -842,63 +844,63 @@ app.get("/api/chart-data", (req, res) => {
     const finalData = { position_counts: [], pie: [], history: [] };
 
     const positionTasks = Array.from({ length: 5 }, (_, i) => {
-        return new Promise((resolve, reject) => {
-            sqlcon.query(`SELECT COUNT(*) AS total FROM qr_sorted_log WHERE position = ? AND DATE(sorted_time) = CURDATE()`, [i + 1], (err, result) => {
-                if (err) return reject(err);
-                finalData.position_counts[i + 1] = result[0].total;
-                resolve();
-            });
+      return new Promise((resolve, reject) => {
+        sqlcon.query(`SELECT COUNT(*) AS total FROM qr_sorted_log WHERE position = ? AND DATE(sorted_time) = CURDATE()`, [i + 1], (err, result) => {
+          if (err) return reject(err);
+          finalData.position_counts[i + 1] = result[0].total;
+          resolve();
         });
+      });
     });
 
     const pie1 = new Promise((resolve, reject) => {
-        sqlcon.query(`SELECT COUNT(*) AS total FROM qr_sorted_log WHERE position = 6 AND DATE(sorted_time) = CURDATE()`, (err, result) => {
-            if (err) return reject(err);
-            finalData.pie[0] = result[0].total;
-            resolve();
-        });
+      sqlcon.query(`SELECT COUNT(*) AS total FROM qr_sorted_log WHERE position = 6 AND DATE(sorted_time) = CURDATE()`, (err, result) => {
+        if (err) return reject(err);
+        finalData.pie[0] = result[0].total;
+        resolve();
+      });
     });
 
     const pie2 = new Promise((resolve, reject) => {
-        sqlcon.query(`SELECT COUNT(*) AS total FROM qr_sorted_log WHERE position BETWEEN 1 AND 5 AND DATE(sorted_time) = CURDATE()`, (err, result) => {
-            if (err) return reject(err);
-            finalData.pie[1] = result[0].total;
-            resolve();
-        });
+      sqlcon.query(`SELECT COUNT(*) AS total FROM qr_sorted_log WHERE position BETWEEN 1 AND 5 AND DATE(sorted_time) = CURDATE()`, (err, result) => {
+        if (err) return reject(err);
+        finalData.pie[1] = result[0].total;
+        resolve();
+      });
     });
 
     const historicalQuery = {
-        day: `SELECT DATE_FORMAT(sorted_time, '%Y-%m-%d') AS label, COUNT(*) AS total 
+      day: `SELECT DATE_FORMAT(sorted_time, '%Y-%m-%d') AS label, COUNT(*) AS total 
+            FROM qr_sorted_log 
+            WHERE sorted_time BETWEEN ? AND ? 
+            GROUP BY label`,
+      month: `SELECT DATE_FORMAT(sorted_time, '%Y-%m') AS label, COUNT(*) AS total 
               FROM qr_sorted_log 
               WHERE sorted_time BETWEEN ? AND ? 
               GROUP BY label`,
-        month: `SELECT DATE_FORMAT(sorted_time, '%Y-%m') AS label, COUNT(*) AS total 
-                FROM qr_sorted_log 
-                WHERE sorted_time BETWEEN ? AND ? 
-                GROUP BY label`,
-        year: `SELECT DATE_FORMAT(sorted_time, '%Y') AS label, COUNT(*) AS total 
-              FROM qr_sorted_log 
-              WHERE sorted_time BETWEEN ? AND ? 
-              GROUP BY label`
+      year: `SELECT DATE_FORMAT(sorted_time, '%Y') AS label, COUNT(*) AS total 
+            FROM qr_sorted_log 
+            WHERE sorted_time BETWEEN ? AND ? 
+            GROUP BY label`
     }[mode];
 
     let endDateTime;
     if (mode === 'day') {
-        endDateTime = end + ' 23:59:59';
+      endDateTime = end + ' 23:59:59';
     } else {
-        endDateTime = end;
+      endDateTime = end;
     }
 
     const historyTask = (start && end && historicalQuery) ? new Promise((resolve, reject) => {
-        sqlcon.query(historicalQuery, [start, endDateTime], (err, results) => {
-            if (err) return reject(err);
-            finalData.history = results;
-            resolve();
-        });
+      sqlcon.query(historicalQuery, [start, endDateTime], (err, results) => {
+        if (err) return reject(err);
+        finalData.history = results;
+        resolve();
+      });
     }) : Promise.resolve();
 
 
     Promise.all([...positionTasks, pie1, pie2, historyTask])
-        .then(() => res.json(finalData))
-        .catch(err => res.status(500).json({ error: "Lỗi truy vấn dữ liệu" }));
+      .then(() => res.json(finalData))
+      .catch(err => res.status(500).json({ error: "Lỗi truy vấn dữ liệu" }));
 });

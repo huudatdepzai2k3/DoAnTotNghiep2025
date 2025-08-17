@@ -52,8 +52,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function logout() // Ctrinh login
 {
-    alert("Đăng xuất thành công");
-    window.location.href = 'Dev_by_HuuDat2k3';
+  alert("Đăng xuất thành công");
+  window.location.href = 'Dev_by_HuuDat2k3';
 }
 
 async function changepassword() {
@@ -222,8 +222,8 @@ async function sendOtp() {
   const username = document.getElementById("new_name").value;
   const phone_number = document.getElementById("new_phone").value;
   const password = document.getElementById("new_password").value;
-  const sendBtn = document.getElementById("sendOtpBtn"); // nút gửi mã
-  const countdownEl = document.getElementById("countdown"); // phần hiển thị countdown
+  const sendBtn = document.getElementById("sendOtpBtn");
+  const countdownEl = document.getElementById("countdown");
 
   if (!username || !phone_number || !password) {
     return alert("❗ Vui lòng điền đầy đủ thông tin");
@@ -253,8 +253,8 @@ async function sendOtp_forget() {
   event.preventDefault();
   const phone_number = document.getElementById("phone_forget").value;
   const password = document.getElementById("new_password_foget").value;
-  const sendBtn = document.getElementById("sendOtpBtn_foget"); // nút gửi mã
-  const countdownEl = document.getElementById("countdown_forget"); // phần hiển thị countdown
+  const sendBtn = document.getElementById("sendOtpBtn_foget");
+  const countdownEl = document.getElementById("countdown_forget");
 
   if (!phone_number || !password) {
     return alert("❗ Vui lòng điền đầy đủ thông tin");
@@ -271,7 +271,6 @@ async function sendOtp_forget() {
     alert(data.message);
 
     if (res.ok) {
-      // ✅ Nếu gửi thành công → đếm ngược
       startCountdown(60, sendBtn, countdownEl);
     }
   } catch (err) {

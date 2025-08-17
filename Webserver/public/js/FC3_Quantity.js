@@ -51,8 +51,8 @@ async function getDataAndDrawCharts() {
           data: yValues_2
         }]
       ,options: {
-          responsive: true, 
-          maintainAspectRatio: false, 
+        responsive: true, 
+        maintainAspectRatio: false, 
         }
       }
     });
@@ -75,10 +75,10 @@ async function getDataAndDrawCharts() {
           }]
         },
         options: {
-            responsive: true, 
-            maintainAspectRatio: false, 
+          responsive: true, 
+          maintainAspectRatio: false, 
           legend: { display: false },
-          scales: { yAxes: [{ ticks: { min: 0, max: max_val } }] }
+          scales: { yAxes: [{ ticks: { min: 0, max: max_val, stepSize: 1 } }] }
         }
       });
     } else {

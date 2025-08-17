@@ -24,7 +24,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
    
     <script>
-        var socket = io("localhost:3000") // IP tĩnh (hoặc IP động, hoặc localhost)
+        var socket = io("127.0.0.1:3000") 
     </script>
 
     <!-- ////////////// CHƯƠNG TRÌNH ĐĂNG NHẬP HỆ THỐNG //////////////  -->
@@ -160,7 +160,7 @@
         ">MÀN HÌNH QUẢN LÍ NGƯỜI DÙNG</button>
     </div>
 
-<!-- //////////////Code cho màn hình 1////////////// -->
+<!-- //////////////Code cho màn hình giám sát////////////// -->
     <div id = "Screen_1">
         <p style="float: right;color:rgb(52, 51, 51);">Cập nhật lần cuối: <span id="last_update"></span></p></br>
         <div class="dashboard">
@@ -198,13 +198,12 @@
             </div>
         </div>
     </div>
-<!-- //////////////Code cho màn hình 2////////////// -->
+<!-- //////////////Code cho màn hình cảnh báo////////////// -->
     <div id = "Screen_2">
         <label id="lb_AL_Search_Start">Từ:</label>
         <input id="dtpk_AL_Search_Start" type="datetime-local">
         <label id="lb_AL_Search_End">Đến:</label>
         <input id="dtpk_AL_Search_End" type="datetime-local">
-        <!--Nút tìm kiếm-->
         <button id="btt_AL_Search" class="btn" onclick="fn_Alarm_By_Time();"></i> TÌM KIẾM</button>
         <div id = "div_table_Alarm">
             <table id="table_Alarm" >
@@ -220,6 +219,7 @@
             </table>
         </div>
     </div>
+<!-- //////////////Code cho màn hình quản lí đơn hàng ////////////// -->
      <div id="Screen_3">
         <div class="dashboard_2">
             <center class="check_QR">
@@ -256,6 +256,7 @@
 
         </div>
     </div>
+<!-- //////////////Code cho màn hình quản lí user////////////// -->
     <div id="Screen_4">
         <h3 style="color: #f1f1f1;"> Xin chào, Admin!</h3>
         <center>
@@ -285,7 +286,7 @@
                     <h4>Nút dừng khẩn cấp</h4>
                 </div>
                 <div class="cd_hoatdong div_button">
-                    <img id = "Button_2" class="button" onclick="socket.emit('Client-send-cmd-toggle', 'state_auto');">
+                    <img id = "Button_2" class="button">
                     <h4>Chế độ hoạt động</h4>
                 </div>
             </div>
