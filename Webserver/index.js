@@ -250,9 +250,9 @@ function fn_Alarm_Manage() {
 }
 
 ////////////////////// SOCKET.IO //////////////////////
-
+let tagData = {};
 function fn_tag() {
-  const tagData = {
+  tagData = {
     emergency_stop: tagArr[1],
     auto: tagArr[2],
     motor: tagArr[3],
@@ -284,12 +284,16 @@ io.on("connection", (socket) => {
   socket.on("Client-send-cmd-toggle", async (tag) => {
 
     try {
-      const currentValue = tagData[tag];
+      const index = tags.indexOf(tag);
+      if (index !== -1) {
+        var currentValue = tagArr[index];
+      }
+
       const newValue = currentValue ? 0 : 1; // toggle 0 ↔ 1
 
       // Ghi giá trị mới lên KepServer
       tagBuilder.clean();
-      const set_value = tagBuilder.write(tag, newValue).get();
+      const set_value = tagBuilder.write('state-'+ tag, newValue).get();
       await iotGateway.write(set_value);
 
       // Cập nhật trạng thái local
