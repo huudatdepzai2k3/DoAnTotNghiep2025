@@ -144,24 +144,27 @@ def insert_qr_sorting(qr_code, address, tinhtrang, position, sorted_time=None):
 
 def send_data_to_plc_SQL(qr_code, address, tinhtrang, position):
     if is_connected(client):
-        try:
-            if 1 <= position <= 6:
-                data_push = bytearray(2)
-                snap7.util.set_int(data_push, 0, position)
-                client.db_write(DB_NUMBER,0,data_push)
+        if snap7.util.get_bool(client.db_read(7, 2, 1), 0, 2):
+            try:
+                if 1 <= position <= 6:
+                    data_push = bytearray(2)
+                    snap7.util.set_int(data_push, 0, position)
+                    client.db_write(DB_NUMBER,0,data_push)
 
-                data_push_1 = client.db_read(DB_NUMBER,2,1)
-                snap7.util.set_bool(data_push_1, 0, 0, True)
-                client.db_write(DB_NUMBER,2,data_push_1)
-                time.sleep(0.2)
-                snap7.util.set_bool(data_push_1, 0, 0, False)
-                client.db_write(DB_NUMBER,2,data_push_1)
-                window.log_to_terminal(f"📤 Gửi vị trí vào PLC: {position}")
-                insert_qr_sorting(qr_code, address, tinhtrang, position)
-            else:
-                window.log_to_terminal(f"⚠️ Vị trí {position} không hợp lệ")
-        except Exception as e:
-            window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vị trí vào PLC: {e}")
+                    data_push_1 = client.db_read(DB_NUMBER,2,1)
+                    snap7.util.set_bool(data_push_1, 0, 0, True)
+                    client.db_write(DB_NUMBER,2,data_push_1)
+                    time.sleep(0.2)
+                    snap7.util.set_bool(data_push_1, 0, 0, False)
+                    client.db_write(DB_NUMBER,2,data_push_1)
+                    window.log_to_terminal(f"📤 Gửi vị trí vào PLC: {position}")
+                    insert_qr_sorting(qr_code, address, tinhtrang, position)
+                else:
+                    window.log_to_terminal(f"⚠️ Vị trí {position} không hợp lệ")
+            except Exception as e:
+                window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vị trí vào PLC: {e}")
+        else :
+            window.log_to_terminal("⚠️ Hệ thống đang lỗi, PLC không sẵn sàng để nhận dữ liệu.")
     else:
         window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vào PLC do mất kết nối với PLC")
 
