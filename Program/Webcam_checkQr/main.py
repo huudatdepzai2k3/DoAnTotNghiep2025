@@ -1,7 +1,7 @@
 import sys
 import pandas as pd
 import cv2
-from pyzbar import pyzbar
+from pyzbar.pyzbar import decode, ZBarSymbol
 import numpy as np
 import time
 import os
@@ -12,7 +12,7 @@ from ultralytics import YOLO
 import snap7
 from snap7.util import set_int
 from PyQt5.QtCore import Qt, pyqtSignal, QThread, QTimer
-from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,QLabel, QPushButton, QTextEdit, QFileDialog, QLineEdit)
+from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,QLabel, QPushButton, QTextEdit, QFileDialog, QLineEdit, QLabel, QSizePolicy)
 from PyQt5.QtGui import QPixmap, QImage, QFont
 
 # Định nghĩa thông số kết nối PLC và Webserver
@@ -38,6 +38,9 @@ plc_ip_current = PLC_IP
 webserver_url_current = WEBSERVER_URL
 last_camera_connected = False
 
+# Biến lưu trạng thái kết nối
+last_plc_status = False
+
 # Khởi tạo kết nối với PLC
 client = snap7.client.Client()
 stop_threads = False
@@ -60,7 +63,8 @@ except pymysql.MySQLError as e:
 # Kiểm tra kết nối đến PLC
 def is_connected(client):
     try:
-        return client.get_connected()
+        state = client.get_cpu_state()
+        return state in ["S7CpuStatusRun", "S7CpuStatusStop"]
     except:
         return False
 
@@ -143,95 +147,105 @@ def insert_qr_sorting(qr_code, address, tinhtrang, position, sorted_time=None):
             conn.close()
 
 def send_data_to_plc_SQL(qr_code, address, tinhtrang, position):
-    if is_connected(client):
-        if snap7.util.get_bool(client.db_read(7, 2, 1), 0, 2):
-            try:
-                if 1 <= position <= 6:
-                    data_push = bytearray(2)
-                    snap7.util.set_int(data_push, 0, position)
-                    client.db_write(DB_NUMBER,0,data_push)
+    if not last_plc_status:
+        window.log_to_terminal("❌ Lỗi: mất kết nối với PLC")
+        return
 
-                    data_push_1 = client.db_read(DB_NUMBER,2,1)
-                    snap7.util.set_bool(data_push_1, 0, 0, True)
-                    client.db_write(DB_NUMBER,2,data_push_1)
-                    time.sleep(0.2)
-                    snap7.util.set_bool(data_push_1, 0, 0, False)
-                    client.db_write(DB_NUMBER,2,data_push_1)
-                    window.log_to_terminal(f"📤 Gửi vị trí vào PLC: {position}")
-                    insert_qr_sorting(qr_code, address, tinhtrang, position)
-                else:
-                    window.log_to_terminal(f"⚠️ Vị trí {position} không hợp lệ")
-            except Exception as e:
-                window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vị trí vào PLC: {e}")
-        else :
-            window.log_to_terminal("⚠️ Hệ thống đang lỗi, PLC không sẵn sàng để nhận dữ liệu.")
-    else:
-        window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vào PLC do mất kết nối với PLC")
+    try:
+        ready_flag = client.db_read(7, 2, 1)
+        if snap7.util.get_bool(ready_flag, 0, 2):
+            window.log_to_terminal("⚠️ PLC chưa sẵn sàng nhận dữ liệu do hệ thống đang lỗi")
+            return
+
+        if not (1 <= position <= 6):
+            window.log_to_terminal(f"⚠️ Vị trí {position} không hợp lệ")
+            return
+
+        data_push = bytearray(2)
+        snap7.util.set_int(data_push, 0, position)
+        client.db_write(DB_NUMBER, 0, data_push)
+
+        trigger = client.db_read(DB_NUMBER, 2, 1)
+        snap7.util.set_bool(trigger, 0, 0, True)
+        client.db_write(DB_NUMBER, 2, trigger)
+
+        time.sleep(0.2)
+
+        snap7.util.set_bool(trigger, 0, 0, False)
+        client.db_write(DB_NUMBER, 2, trigger)
+
+        window.log_to_terminal(f"📤 Đã gửi vị trí {position} vào PLC")
+        try:
+            insert_qr_sorting(qr_code, address, tinhtrang, position)
+        except Exception as e_db:
+            window.log_to_terminal(f"⚠️ Lỗi ghi MySQL: {e_db}")
+
+    except Exception as e:
+        window.log_to_terminal(f"❌ Lỗi gửi dữ liệu vị trí vào PLC: {e}")
 
 # Lấy vị trí từ dữ liệu Excel và gửi vào PLC
 def get_position_from_file(qr_code, tinhtrang):
     global window
     try:
-        if 'window' not in globals() or not hasattr(window, 'data_dict'):
-            window.log_to_terminal("⚠️ Chưa tải dữ liệu Excel.")
+        # Kiểm tra dữ liệu Excel đã load chưa
+        if (
+            'window' not in globals()
+            or not hasattr(window, 'data_dict')
+            or not hasattr(window, 'address_to_pos_dict')
+            or not window.data_dict
+            or not window.address_to_pos_dict
+        ):
+            window.log_to_terminal("⚠️ Chưa tải dữ liệu Excel hoặc dữ liệu rỗng.")
             return
 
-        # Kiểm tra mã QR có trong dữ liệu
+        # Kiểm tra QR code có trong Excel không
         if qr_code not in window.data_dict:
             window.log_to_terminal("⚠️ QR code không tồn tại trong dữ liệu Excel.")
             window.qr_label_2.setText("📦 Tình trạng hàng: Không xác định")
-            send_data_to_plc_SQL(qr_code, "Không xác định", "Không xác định", 6)
+            send_data_to_plc_SQL(qr_code, "Không xác định","Không xác định", 6)
             return
-        else :    
-            address = str(window.data_dict[qr_code]).strip()
-            window.pos_label.setText(f"📍 Vị trí: {address}")
-            words1 = address.lower().split()
 
-           # Tìm file_address có cụm từ chung dài nhất
-            max_len_max = 0
-            best_match = None
-            for file_address, file_pos in window.address_to_pos_dict.items():
-                words2 = file_address.lower().split()
-                n, m = len(words1), len(words2)
-                dp = [[0] * (m + 1) for _ in range(n + 1)]
-                max_len = 0
+        # Lấy địa chỉ từ file Excel
+        address = str(window.data_dict[qr_code]).strip()
+        window.pos_label.setText(f"📍 Vị trí: {address}")
 
-                for i in range(n):
-                    for j in range(m):
-                        if words1[i] == words2[j]:
-                            dp[i + 1][j + 1] = dp[i][j] + 1
-                            if dp[i + 1][j + 1] > max_len:
-                                max_len = dp[i + 1][j + 1]
-                        else:
-                            dp[i + 1][j + 1] = 0
+        words1 = address.lower().split()
+        best_match, max_len_max = None, 0
 
-                if max_len > max_len_max:
-                    max_len_max = max_len
-                    best_match = (file_address, file_pos)
+        # Tìm file_address có cụm từ chung dài nhất
+        for file_address, file_pos in window.address_to_pos_dict.items():
+            words2 = file_address.lower().split()
+            n, m = len(words1), len(words2)
+            dp = [[0] * (m + 1) for _ in range(n + 1)]
+            max_len = 0
 
-            # Nếu tìm được cụm từ chung phù hợp
-            if best_match and max_len_max > 0:
-                file_address, file_pos = best_match
-                words3 = file_address.lower().split()
-                common_phrases = [
-                    ' '.join(words1[i:i+max_len_max])
-                    for i in range(len(words1) - max_len_max + 1)
-                    if ' '.join(words1[i:i+max_len_max]) in ' '.join(words3)
-                ]
+            for i in range(n):
+                for j in range(m):
+                    if words1[i] == words2[j]:
+                        dp[i + 1][j + 1] = dp[i][j] + 1
+                        max_len = max(max_len, dp[i + 1][j + 1])
 
-                if common_phrases:
-                    if tinhtrang == 'hàng rách':
-                        pos = 6
-                    else:
-                        pos = int(file_pos)
-                    window.log_to_terminal(f"✅ Vị trí phân loại: {pos}")
-                    send_data_to_plc_SQL(qr_code, address, tinhtrang, pos)
-            else:
-                window.log_to_terminal("⚠️ Không tìm thấy vị trí phù hợp.")
-                        
+            if max_len > max_len_max:
+                max_len_max = max_len
+                best_match = (file_address, file_pos)
+
+        # Nếu tìm được vị trí phù hợp
+        if best_match and max_len_max > 0:
+            _, file_pos = best_match
+            try:
+                pos = 6 if tinhtrang == 'hàng rách' else int(file_pos)
+            except ValueError:
+                window.log_to_terminal(f"⚠️ Giá trị file_pos không hợp lệ: {file_pos}")
+                pos = 6
+
+            window.log_to_terminal(f"✅ Vị trí phân loại: {pos}")
+            send_data_to_plc_SQL(qr_code, address, tinhtrang, pos)
+        else:
+            window.log_to_terminal("⚠️ Không tìm thấy vị trí phù hợp.")
+
     except Exception as e:
         window.log_to_terminal(f"❌ Lỗi đọc file: {e}")
-
+    
 # Lớp theo dõi trạng thái kết nối PLC và Webserver
 class ConnectionMonitorThread(QThread):
     status_updated = pyqtSignal(bool, bool, bool)
@@ -274,28 +288,24 @@ class ConnectionMonitorThread(QThread):
                     window.log_to_terminal(f"❌ Lỗi kết nối lại PLC: {e}")
 
             # Xử lý mất kết nối PLC
-            if not self.last_plc_status :
+            if not self.last_plc_status:
                 window.log_to_terminal("🔄 Mất kết nối PLC. Thử kết nối lại...")
                 try:
                     if not client.get_connected():
                         client.connect(plc_ip_current, RACK, SLOT)
                         window.log_to_terminal("✅ Đã kết nối lại PLC thành công.")
+                    else:
+                        try:
+                            client.db_read(1, 0, 1) 
+                        except:
+                            client.disconnect()
+                            client.connect(plc_ip_current, RACK, SLOT)
+                            window.log_to_terminal("✅ Đã kết nối lại PLC sau khi kiểm tra lỗi đọc.")
                 except Exception as e:
                     window.log_to_terminal(f"❌ Lỗi kết nối lại PLC: {e}")
+                    client.disconnect()  
 
-            # Xử lý mất kết nối Webserver
-            if not self.last_web_status:
-                window.log_to_terminal("🔄 Mất kết nối Webserver. Thử kết nối lại...")
-                try:
-                    response = requests.get(WEBSERVER_URL)
-                    if response.status_code == 200:
-                        window.log_to_terminal("✅ Đã kết nối lại Webserver thành công.")
-                    else:
-                        window.log_to_terminal("❌ Không thể kết nối lại Webserver.")
-                except Exception as e:
-                    window.log_to_terminal(f"❌ Lỗi kết nối lại Webserver: {e}")
-
-            time.sleep(5)
+            time.sleep(1)
 
 # Lớp giao diện chính ứng dụng
 class DemoApp(QWidget):
@@ -309,7 +319,6 @@ class DemoApp(QWidget):
         self.capture.set(3, 640)
         self.capture.set(4, 480)
         self.camera_connected = self.capture.isOpened()
-        self.last_camera_connected = False
          
         self.yolo_model = YOLO("best.pt")  
 
@@ -417,22 +426,7 @@ class DemoApp(QWidget):
         # # Khởi tạo các thread
         self.connection_thread = ConnectionMonitorThread()
         self.connection_thread.status_updated.connect(self.update_status)
-        self.connection_thread.start()
-    
-    # Kiểm tra kết nối camera
-    def check_camera_connection(self):
-        if not self.capture.isOpened():
-            self.log_to_terminal("🔄 Mất kết nối camera. Đang thử kết nối lại...")
-            self.capture.release()
-            self.capture = cv2.VideoCapture(0)
-            self.capture.set(3, 640)
-            self.capture.set(4, 480)
-            if self.capture.isOpened():
-                self.log_to_terminal("✅ Đã kết nối lại camera thành công.")
-                self.camera_connected = True
-            else:
-                self.log_to_terminal("❌ Không thể kết nối lại camera.")
-                self.camera_connected = False
+        self.connection_thread.start() 
 
     # Hàm log thông báo vào terminal
     def log_to_terminal(self, msg):
@@ -478,66 +472,94 @@ class DemoApp(QWidget):
 
     def read_frame(self):
         tinhtrang_send = None
-        tinhtrang = None
-        if not self.capture.isOpened():
-            self.check_camera_connection()
-            return
+        tinhtrang = "bình thường" 
 
-        ret, frame = self.capture.read()
+        ret, frame = (self.capture.read() if self.capture else (False, None))
         if not ret or frame is None:
-            self.log_to_terminal("⚠️ Không đọc được frame từ camera.")
-            self.check_camera_connection()
+            self.log_to_terminal("🔄 Mất kết nối camera. Đang thử kết nối lại...")
+            if last_plc_status:
+                try:
+                    data_push_2 = client.db_read(DB_NUMBER, 2, 1)
+                    snap7.util.set_bool(data_push_2, 0, 1, self.camera_connected)
+                    client.db_write(DB_NUMBER, 2, data_push_2)
+                    self.last_camera_connected = self.camera_connected
+                except Exception as e:
+                    self.log_to_terminal(f"❌ Lỗi ghi PLC trạng thái camera: {e}")
+
+            if self.capture:
+                self.capture.release()
+
+            found = False
+            for cam_index in range(0, 6):
+                cap_test = cv2.VideoCapture(cam_index, cv2.CAP_DSHOW)
+                cap_test.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                cap_test.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                if cap_test.isOpened():
+                    self.capture = cap_test
+                    self.log_to_terminal(f"✅ Đã phát hiện & kết nối lại camera USB (index {cam_index}).")
+                    self.camera_connected = True
+                    found = True
+                    break
+
+            if not found:
+                self.log_to_terminal("❌ Chưa phát hiện camera USB. Sẽ thử lại sau...")
+                self.camera_connected = False
+
+                # Thử lại sau 2 giây cho đến khi cắm lại USB
+                QTimer.singleShot(2000, lambda: (
+                    (self.capture.release() if self.capture else None),
+                    [setattr(self, "capture", cv2.VideoCapture(i, cv2.CAP_DSHOW)) or
+                    self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640) or
+                    self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480) or
+                    self.log_to_terminal(f"✅ Camera USB đã sẵn sàng (index {i}).")
+                    for i in range(0, 6) if cv2.VideoCapture(i, cv2.CAP_DSHOW).isOpened()]
+                ))
             return
-        
-        # Gửi trạng thái kết nối camera vào PLC       
-        if self.camera_connected != self.last_camera_connected:
-            if self.last_plc_status:
-                data_push_2 = client.db_read(DB_NUMBER,2,1)
-                snap7.util.set_bool(data_push_2, 0, 1, self.camera_connected)
-                client.db_write(DB_NUMBER,2,data_push_2)
-                self.last_camera_connected = self.camera_connected
-          
-        # ---------- YOLOv8 Object Detection ----------
-        results = self.yolo_model(frame)[0]
-        for box in results.boxes:
-            cls_id = int(box.cls[0])
-            conf = float(box.conf[0])
-            tinhtrang = self.yolo_model.names[cls_id]
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
+        else:
+            try:
+                results = self.yolo_model(frame, verbose=False)[0]
+                for box in results.boxes:
+                    cls_id = int(box.cls[0])
+                    conf = float(box.conf[0])
+                    tinhtrang = self.yolo_model.names[cls_id]  
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])
+                    color = (0, 0, 0) if tinhtrang == 'hang_rach' else (0, 255, 0)
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                    cv2.putText(frame, f"{tinhtrang} {conf:.2f}", (x1, y1 - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            except Exception as e:
+                self.log_to_terminal(f"❌ Lỗi YOLO detect: {e}")
 
-            color = (0, 255, 0) if tinhtrang != 'hang_rach' else (0, 0, 0)  
-            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-            cv2.putText(frame, f"{tinhtrang} {conf:.2f}", (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            try:
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  
+                qrcodes = decode(gray, symbols=[ZBarSymbol.QRCODE])
+                for qrcode in qrcodes:
+                    (x, y, w, h) = qrcode.rect
+                    if w > 0 and h > 0:
+                        data = qrcode.data.decode('utf-8')
+                        if time.time() - self.last_detection_time > 0.5 and data != self.last_qr_code:
+                            self.last_qr_code = data
+                            self.last_detection_time = time.time()
 
-        # Quét QR code
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        qrcodes = pyzbar.decode(gray)
+                            self.log_to_terminal(f"📷 Mã QR mới: {data}")
+                            self.qr_label.setText(f"📦 Mã QR: {data}")
 
-        for qrcode in qrcodes:
-            (x, y, w, h) = qrcode.rect
-            if w > 0 and h > 0:
-                data = qrcode.data.decode('utf-8')
-                # Mỗi 0.5s xử lý mã QR mới
-                if time.time() - self.last_detection_time > 0.5 and data != self.last_qr_code:
-                    self.last_qr_code = data
-                    self.last_detection_time = time.time()
-                    self.log_to_terminal(f"📷 Mã QR mới: {data}")
-                    self.qr_label.setText(f"📦 Mã QR: {data}")
-                    if tinhtrang == 'hang_rach':
-                        self.qr_label_2.setText("📦 Tình trạng hàng: Rách")
-                        tinhtrang_send = 'hàng rách'
-                    else:
-                        self.qr_label_2.setText("📦 Tình trạng hàng: Bình thường")
-                        tinhtrang_send = 'bình thường'
+                            if tinhtrang == 'hang_rach':
+                                self.qr_label_2.setText("📦 Tình trạng hàng: Rách")
+                                tinhtrang_send = 'hàng rách'
+                            else:
+                                self.qr_label_2.setText("📦 Tình trạng hàng: Bình thường")
+                                tinhtrang_send = 'bình thường'
 
-                    get_position_from_file(data, tinhtrang_send)
+                            get_position_from_file(data, tinhtrang_send)
 
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
-                cv2.putText(frame, f"{data}", (x, y - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 2)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
+                        cv2.putText(frame, f"{data}", (x, y - 10),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 2)
+            except Exception as e:
+                self.log_to_terminal(f"❌ Lỗi quét QR: {e}")
 
-        self.update_image(frame)
+            self.update_image(frame)
 
     # Cập nhật hình ảnh từ camera
     def update_image(self, frame):
@@ -546,7 +568,7 @@ class DemoApp(QWidget):
         qt_img = QImage(rgb_image.data, w, h, ch * w, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(qt_img).scaled(self.image_label.size(), Qt.KeepAspectRatio)
         self.image_label.setPixmap(pixmap)
-
+            
     # Cập nhật thông tin mã QR khi phát hiện
     def update_qr_info(self, qr_code):
         self.qr_label.setText(f"📦 Mã QR: {qr_code}")
