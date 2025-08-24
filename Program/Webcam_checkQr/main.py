@@ -305,6 +305,10 @@ class ConnectionMonitorThread(QThread):
                     window.log_to_terminal(f"❌ Lỗi kết nối lại PLC: {e}")
                     client.disconnect()  
 
+            if is_connected(client) :
+                global last_plc_status
+                last_plc_status = True
+
             time.sleep(1)
 
 # Lớp giao diện chính ứng dụng
@@ -319,8 +323,9 @@ class DemoApp(QWidget):
         self.capture.set(3, 640)
         self.capture.set(4, 480)
         self.camera_connected = self.capture.isOpened()
-         
-        self.yolo_model = YOLO("best.pt")  
+
+        self.yolo_model = YOLO("best.pt")
+        self.last_yolo_time = 0
 
         self.last_qr_code = ""
         self.last_detection_time = time.time()
@@ -490,7 +495,7 @@ class DemoApp(QWidget):
                 self.capture.release()
 
             found = False
-            for cam_index in range(0, 6):
+            for cam_index in range(0, 3):
                 cap_test = cv2.VideoCapture(cam_index, cv2.CAP_DSHOW)
                 cap_test.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
                 cap_test.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -516,50 +521,65 @@ class DemoApp(QWidget):
                 ))
             return
         else:
-            try:
-                results = self.yolo_model(frame, verbose=False)[0]
-                for box in results.boxes:
-                    cls_id = int(box.cls[0])
-                    conf = float(box.conf[0])
-                    tinhtrang = self.yolo_model.names[cls_id]  
-                    x1, y1, x2, y2 = map(int, box.xyxy[0])
-                    color = (0, 0, 0) if tinhtrang == 'hang_rach' else (0, 255, 0)
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                    cv2.putText(frame, f"{tinhtrang} {conf:.2f}", (x1, y1 - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-            except Exception as e:
-                self.log_to_terminal(f"❌ Lỗi YOLO detect: {e}")
+            try :
+                # Resize nhỏ để tăng tốc
+                small_frame = cv2.resize(frame, (320, 240))
 
-            try:
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  
-                qrcodes = decode(gray, symbols=[ZBarSymbol.QRCODE])
-                for qrcode in qrcodes:
-                    (x, y, w, h) = qrcode.rect
-                    if w > 0 and h > 0:
-                        data = qrcode.data.decode('utf-8')
-                        if time.time() - self.last_detection_time > 0.5 and data != self.last_qr_code:
-                            self.last_qr_code = data
-                            self.last_detection_time = time.time()
+                # --- YOLO detection (chạy 5 FPS = mỗi 200ms) ---
+                now = time.time()
+                if now - self.last_yolo_time > 0.2:
+                    self.last_yolo_time = now
+                    results = self.yolo_model.predict(small_frame, imgsz=320, conf=0.5, verbose=False)
+                    for r in results:
+                        for box in r.boxes:
+                            cls_id = int(box.cls[0])
+                            conf = float(box.conf[0])
+                            label = f"{self.yolo_model.names[cls_id]} ({conf:.2f})"
 
-                            self.log_to_terminal(f"📷 Mã QR mới: {data}")
-                            self.qr_label.setText(f"📦 Mã QR: {data}")
+                            self.qr_label_2.setText(f"📦 Tình trạng hàng: {label}")
 
-                            if tinhtrang == 'hang_rach':
-                                self.qr_label_2.setText("📦 Tình trạng hàng: Rách")
-                                tinhtrang_send = 'hàng rách'
+                            # Lưu tình trạng YOLO
+                            if self.yolo_model.names[cls_id] == "hang_rach" and conf > 0.8:
+                                self.tinhtrang = "hang_rach"
                             else:
-                                self.qr_label_2.setText("📦 Tình trạng hàng: Bình thường")
-                                tinhtrang_send = 'bình thường'
+                                self.tinhtrang = "bình thường"
+
+                # --- QR code detection ---
+                qrcodes = decode(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), symbols=[ZBarSymbol.QRCODE])
+                for qrcode in qrcodes:
+                    x, y, w, h = qrcode.rect
+                    if w > 0 and h > 0:
+                        data = qrcode.data.decode("utf-8")
+                        if now - self.last_detection_time > 0.25 and data != self.last_qr_code:
+                            self.last_qr_code = data
+                            self.last_detection_time = now
+                            self.qr_label.setText(f"📦 Mã QR: {data}")
+                            self.pos_label.setText("📍 Vị trí: chưa biết")
+
+                            # Gán tình trạng YOLO
+                            if hasattr(self, "tinhtrang"):
+                                if self.tinhtrang == 'hang_rach':
+                                    self.qr_label_2.setText("📦 Tình trạng hàng: Rách")
+                                    tinhtrang_send = 'hàng rách'
+                                elif self.tinhtrang == 'bình thường':
+                                    self.qr_label_2.setText("📦 Tình trạng hàng: Bình thường")
+                                    tinhtrang_send = 'bình thường'
+                                else:
+                                    tinhtrang_send = 'không xác định'
+                            else:
+                                tinhtrang_send = 'không xác định'
 
                             get_position_from_file(data, tinhtrang_send)
 
-                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
+                        # Vẽ khung QR
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 0), 2)
                         cv2.putText(frame, f"{data}", (x, y - 10),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 2)
-            except Exception as e:
-                self.log_to_terminal(f"❌ Lỗi quét QR: {e}")
 
-            self.update_image(frame)
+                self.update_image(frame)
+
+            except Exception as e:
+                self.log_to_terminal(f"❌ Lỗi quét QR/YOLO: {e}")
 
     # Cập nhật hình ảnh từ camera
     def update_image(self, frame):
