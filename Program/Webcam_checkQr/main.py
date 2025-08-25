@@ -8,6 +8,7 @@ import os
 import requests
 import datetime
 import pymysql
+import threading
 from ultralytics import YOLO
 import snap7
 from snap7.util import set_int
@@ -61,13 +62,17 @@ try:
 except pymysql.MySQLError as e:
     print("❌ Lỗi kết nối MySQL:", e)
 
+# Khởi tạo lock để đồng bộ hóa truy cập cơ sở dữ liệu
+lock = threading.Lock()
+
 # Kiểm tra kết nối đến PLC
 def is_connected(client):
-    try:
-        state = client.get_cpu_state()
-        return state in ["S7CpuStatusRun", "S7CpuStatusStop"]
-    except:
-        return False
+    with lock:
+        try:
+            state = client.get_cpu_state()
+            return state in ["S7CpuStatusRun", "S7CpuStatusStop"]
+        except:
+            return False
 
 # Kiểm tra kết nối đến Webserver
 def is_connected_webserver():
@@ -153,29 +158,31 @@ def send_data_to_plc_SQL(qr_code, address, tinhtrang, position):
         return
 
     try:
-        ready_flag = client.db_read(7, 2, 1)
-        if snap7.util.get_bool(ready_flag, 0, 2):
-            window.log_to_terminal("⚠️ PLC chưa sẵn sàng nhận dữ liệu do hệ thống đang lỗi")
-            return
+        with lock :
+            ready_flag = client.db_read(7, 2, 1)
+            if snap7.util.get_bool(ready_flag, 0, 2):
+                window.log_to_terminal("⚠️ PLC chưa sẵn sàng nhận dữ liệu do hệ thống đang lỗi")
+                return
 
         if not (1 <= position <= 6):
             window.log_to_terminal(f"⚠️ Vị trí {position} không hợp lệ")
             return
+        
+        with lock :
+            data_push = bytearray(2)
+            snap7.util.set_int(data_push, 0, position)
+            client.db_write(DB_NUMBER, 0, data_push)
 
-        data_push = bytearray(2)
-        snap7.util.set_int(data_push, 0, position)
-        client.db_write(DB_NUMBER, 0, data_push)
+            trigger = client.db_read(DB_NUMBER, 2, 1)
+            snap7.util.set_bool(trigger, 0, 0, True)
+            client.db_write(DB_NUMBER, 2, trigger)
 
-        trigger = client.db_read(DB_NUMBER, 2, 1)
-        snap7.util.set_bool(trigger, 0, 0, True)
-        client.db_write(DB_NUMBER, 2, trigger)
+            time.sleep(0.25)
 
-        time.sleep(0.2)
+            snap7.util.set_bool(trigger, 0, 0, False)
+            client.db_write(DB_NUMBER, 2, trigger)
 
-        snap7.util.set_bool(trigger, 0, 0, False)
-        client.db_write(DB_NUMBER, 2, trigger)
-
-        window.log_to_terminal(f"📤 Đã gửi vị trí {position} vào PLC")
+            window.log_to_terminal(f"📤 Đã gửi vị trí {position} vào PLC")
         try:
             insert_qr_sorting(qr_code, address, tinhtrang, position)
         except Exception as e_db:
@@ -485,10 +492,12 @@ class DemoApp(QWidget):
             self.log_to_terminal("🔄 Mất kết nối camera. Đang thử kết nối lại...")
             if last_plc_status and last_camera_state == True:
                 try:
-                    last_camera_state = False
-                    data_push_2 = client.db_read(DB_NUMBER, 2, 1)
-                    snap7.util.set_bool(data_push_2, 0, 1, False)
-                    client.db_write(DB_NUMBER, 2, data_push_2)
+                    with lock :
+                        last_camera_state = False
+                        data_push_2 = client.db_read(DB_NUMBER, 2, 1)
+                        snap7.util.set_bool(data_push_2, 0, 1, False)
+                        client.db_write(DB_NUMBER, 2, data_push_2)  
+                        self.log_to_terminal("❌ Đã ghi trạng thái camera mất kết nối vào PLC.")
                 except Exception as e:
                         self.log_to_terminal(f"❌ Lỗi ghi PLC trạng thái camera: {e}")
 
@@ -514,10 +523,12 @@ class DemoApp(QWidget):
         else:
             if last_plc_status and last_camera_state == False:
                 try:
-                    last_camera_state = True
-                    data_push_2 = client.db_read(DB_NUMBER, 2, 1)
-                    snap7.util.set_bool(data_push_2, 0, 1, True)
-                    client.db_write(DB_NUMBER, 2, data_push_2)
+                    with lock:
+                        last_camera_state = True
+                        data_push_2 = client.db_read(DB_NUMBER, 2, 1)
+                        snap7.util.set_bool(data_push_2, 0, 1, True)
+                        client.db_write(DB_NUMBER, 2, data_push_2)
+                        self.log_to_terminal("✅ Đã ghi trạng thái camera kết nối thành công vào PLC.")
                 except Exception as e:
                     self.log_to_terminal(f"❌ Lỗi ghi PLC trạng thái camera: {e}")
 
