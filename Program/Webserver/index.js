@@ -284,20 +284,13 @@ io.on("connection", (socket) => {
   socket.on("Client-send-cmd-toggle", async (tag) => {
 
     try {
-      const index = tags.indexOf(tag);
-      if (index !== -1) {
-        var currentValue = tagArr[index];
-      }
-
-      const newValue = currentValue ? 0 : 1; // toggle 0 ↔ 1
-
-      // Ghi giá trị mới lên KepServer
+      var currentValue = tagArr[1];
+      const newValue = currentValue ? 0 : 1; 
       tagBuilder.clean();
-      const set_value = tagBuilder.write('state-'+ tag, newValue).get();
-      await iotGateway.write(set_value);
-
-      // Cập nhật trạng thái local
-      tagArr[index] = newValue;
+      const set_value = tagBuilder
+          .write("state_"+tag,newValue)
+          .get();
+      iotGateway.write(set_value);
 
       console.log(`✅ Toggle tag "${tag}" thành công. Giá trị mới: ${newValue}`);
       io.emit("log", { type: "success", message: `✅ Toggle tag ${tag} thành công` });

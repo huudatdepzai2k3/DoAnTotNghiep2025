@@ -1,7 +1,14 @@
 ////////////// YÊU CẦU DỮ LIỆU TỪ SERVER- REQUEST DATA //////////////
+let alarmShowRunning = true;
 var myVar = setInterval(myTimer, 1000);
 function myTimer() {
     socket.emit("Client-send-data", "Request data client"); 
+    if (alarmShowRunning) {
+        socket.emit("msg_Alarm_Show");
+        socket.on('Alarm_Show', function(data){
+            fn_table_Alarm(data);
+        });
+    }
 }
 
 // Hàm hiển thị dữ liệu lên IO Field
@@ -66,32 +73,6 @@ function fn_SymbolStatus(ObjectID, SymName, TagValue) {
     element.src = `images/Symbol/${SymName}_${suffix}.png`;
 }
 
-socket.on('Alarm_Show', function(data){
-    fn_table_Alarm(data);
-});
-
-// Gửi yêu cầu lấy dữ liệu cảnh báo
-function fn_Alarm_Show(){
-    socket.emit("msg_Alarm_Show");
-}
-
-let alarmShowRunning = true;
-function fn_Alarm_Show_Loop() {
-    if (!alarmShowRunning) return;
-    fn_Alarm_Show();
-    setTimeout(fn_Alarm_Show_Loop, 1000);
-}
-
-function pauseAlarmFor15s() {
-    alarmShowRunning = false;
-
-    setTimeout(() => {
-        alarmShowRunning = true;
-        fn_Alarm_Show_Loop(); 
-    }, 15000);
-}
-
-// Hiển thị dữ liệu ra bảng HTML
 function fn_table_Alarm(data) {
     const tbody = $("#table_Alarm tbody");
     tbody.empty();
@@ -126,9 +107,16 @@ function fn_Alarm_By_Time()
     alarmShowRunning = false;
     var val = [document.getElementById('dtpk_AL_Search_Start').value,
                document.getElementById('dtpk_AL_Search_End').value];
+    if (val[0] === "" || val[1] === "") {
+        alert("Vui lòng chọn thời gian bắt đầu và kết thúc!");
+        alarmShowRunning = true;
+        return;
+    } 
     socket.emit('msg_Alarm_ByTime', val);
     socket.on('Alarm_ByTime', function(data){
         fn_table_Alarm(data); 
     });
-    pauseAlarmFor15s();
+    setTimeout(() => {
+        alarmShowRunning = true;
+    }, 15000);
 }

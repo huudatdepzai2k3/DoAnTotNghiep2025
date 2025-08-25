@@ -477,7 +477,6 @@ class DemoApp(QWidget):
 
     def read_frame(self):
         tinhtrang_send = None
-        tinhtrang = "bình thường" 
 
         ret, frame = (self.capture.read() if self.capture else (False, None))
         if not ret or frame is None:
