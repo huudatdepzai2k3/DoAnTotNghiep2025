@@ -144,7 +144,7 @@ function fn_sql_insert() {
   const values = [
     tagArr[1], tagArr[2], tagArr[3], tagArr[4], tagArr[5],
     tagArr[6], tagArr[7], tagArr[8], tagArr[9], tagArr[10],
-    tagArr[11], tagArr[12], tagArr[13], tagArr[14], tagArr[15]
+    tagArr[11], tagArr[12], tagArr[13], tagArr[14]
   ];
 
   if (!arraysEqual(values, values_old)) {
@@ -152,7 +152,7 @@ function fn_sql_insert() {
       INSERT INTO plc_data (
         date_time, data_run, data_auto, data_motor,
         data_sensor_1, data_sensor_2, data_sensor_3, data_sensor_4, data_sensor_5, data_sensor_detech,
-        data_cylinder_1, data_cylinder_2, data_cylinder_3, data_cylinder_4, data_cylinder_5, data_camera_tripped
+        data_cylinder_1, data_cylinder_2, data_cylinder_3, data_cylinder_4, data_cylinder_5
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 

@@ -221,8 +221,8 @@ IGuiPage
 	}
 	IGuiQmlRectangle
 	{
-		id: q671088682
-		objId: 671088682
+		id: q671088681
+		objId: 671088681
 		x: 617
 		y: 195
 		width: 80
@@ -235,8 +235,8 @@ IGuiPage
 	}
 	IGuiTextField
 	{
-		id: q268435511
-		objId: 268435511
+		id: q268435510
+		objId: 268435510
 		x: 516
 		y: 195
 		width: 94
@@ -251,8 +251,8 @@ IGuiPage
 	}
 	IGuiQmlRectangle
 	{
-		id: q671088683
-		objId: 671088683
+		id: q671088682
+		objId: 671088682
 		x: 617
 		y: 241
 		width: 80
@@ -265,8 +265,8 @@ IGuiPage
 	}
 	IGuiTextField
 	{
-		id: q268435512
-		objId: 268435512
+		id: q268435511
+		objId: 268435511
 		x: 516
 		y: 243
 		width: 93
@@ -281,8 +281,8 @@ IGuiPage
 	}
 	IGuiQmlRectangle
 	{
-		id: q671088684
-		objId: 671088684
+		id: q671088683
+		objId: 671088683
 		x: 617
 		y: 288
 		width: 80
@@ -295,10 +295,40 @@ IGuiPage
 	}
 	IGuiQmlRectangle
 	{
+		id: q671088684
+		objId: 671088684
+		x: 617
+		y: 335
+		width: 80
+		height: 30
+		qm_BorderWidth: 1
+		qm_TextColor: "#ff181c31"
+		qm_FillColor: "#ffdedbde"
+		qm_RectangleWidth: 80
+		qm_RectangleHeight: 30
+	}
+	IGuiTextField
+	{
+		id: q268435512
+		objId: 268435512
+		x: 516
+		y: 339
+		width: 93
+		height: 23
+		qm_Transparent : true 
+		qm_TextColor: "#ffffffff"
+		qm_ValueVarTextAlignmentVertical: Text.AlignVCenter
+		qm_Anchors.bottomMargin: 2
+		qm_Anchors.leftMargin: 3
+		qm_Anchors.rightMargin: 2
+		qm_Anchors.topMargin: 2
+	}
+	IGuiQmlRectangle
+	{
 		id: q671088685
 		objId: 671088685
 		x: 617
-		y: 335
+		y: 382
 		width: 80
 		height: 30
 		qm_BorderWidth: 1
@@ -312,7 +342,7 @@ IGuiPage
 		id: q268435513
 		objId: 268435513
 		x: 516
-		y: 339
+		y: 387
 		width: 93
 		height: 23
 		qm_Transparent : true 
@@ -328,7 +358,7 @@ IGuiPage
 		id: q671088686
 		objId: 671088686
 		x: 617
-		y: 382
+		y: 429
 		width: 80
 		height: 30
 		qm_BorderWidth: 1
@@ -341,36 +371,6 @@ IGuiPage
 	{
 		id: q268435514
 		objId: 268435514
-		x: 516
-		y: 387
-		width: 93
-		height: 23
-		qm_Transparent : true 
-		qm_TextColor: "#ffffffff"
-		qm_ValueVarTextAlignmentVertical: Text.AlignVCenter
-		qm_Anchors.bottomMargin: 2
-		qm_Anchors.leftMargin: 3
-		qm_Anchors.rightMargin: 2
-		qm_Anchors.topMargin: 2
-	}
-	IGuiQmlRectangle
-	{
-		id: q671088687
-		objId: 671088687
-		x: 617
-		y: 429
-		width: 80
-		height: 30
-		qm_BorderWidth: 1
-		qm_TextColor: "#ff181c31"
-		qm_FillColor: "#ffdedbde"
-		qm_RectangleWidth: 80
-		qm_RectangleHeight: 30
-	}
-	IGuiTextField
-	{
-		id: q268435515
-		objId: 268435515
 		x: 516
 		y: 436
 		width: 93
@@ -385,8 +385,8 @@ IGuiPage
 	}
 	IGuiTextField
 	{
-		id: q268435516
-		objId: 268435516
+		id: q268435515
+		objId: 268435515
 		x: 515
 		y: 291
 		width: 93
@@ -401,8 +401,8 @@ IGuiPage
 	}
 	IGuiTextField
 	{
-		id: q268435517
-		objId: 268435517
+		id: q268435516
+		objId: 268435516
 		x: 275
 		y: 245
 		width: 16
@@ -417,8 +417,8 @@ IGuiPage
 	}
 	IGuiTextField
 	{
-		id: q268435518
-		objId: 268435518
+		id: q268435517
+		objId: 268435517
 		x: 129
 		y: 195
 		width: 74

@@ -40,6 +40,7 @@ last_camera_connected = False
 
 # Biến lưu trạng thái kết nối
 last_plc_status = False
+last_camera_state = False
 
 # Khởi tạo kết nối với PLC
 client = snap7.client.Client()
@@ -476,19 +477,20 @@ class DemoApp(QWidget):
                 self.log_to_terminal(f"❌ Lỗi tải Excel: {e}")
 
     def read_frame(self):
+        global last_camera_state
         tinhtrang_send = None
 
         ret, frame = (self.capture.read() if self.capture else (False, None))
         if not ret or frame is None:
             self.log_to_terminal("🔄 Mất kết nối camera. Đang thử kết nối lại...")
-            if last_plc_status:
+            if last_plc_status and last_camera_state == True:
                 try:
+                    last_camera_state = False
                     data_push_2 = client.db_read(DB_NUMBER, 2, 1)
-                    snap7.util.set_bool(data_push_2, 0, 1, self.camera_connected)
+                    snap7.util.set_bool(data_push_2, 0, 1, False)
                     client.db_write(DB_NUMBER, 2, data_push_2)
-                    self.last_camera_connected = self.camera_connected
                 except Exception as e:
-                    self.log_to_terminal(f"❌ Lỗi ghi PLC trạng thái camera: {e}")
+                        self.log_to_terminal(f"❌ Lỗi ghi PLC trạng thái camera: {e}")
 
             if self.capture:
                 self.capture.release()
@@ -508,18 +510,17 @@ class DemoApp(QWidget):
             if not found:
                 self.log_to_terminal("❌ Chưa phát hiện camera USB. Sẽ thử lại sau...")
                 self.camera_connected = False
-
-                # Thử lại sau 2 giây cho đến khi cắm lại USB
-                QTimer.singleShot(2000, lambda: (
-                    (self.capture.release() if self.capture else None),
-                    [setattr(self, "capture", cv2.VideoCapture(i, cv2.CAP_DSHOW)) or
-                    self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640) or
-                    self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480) or
-                    self.log_to_terminal(f"✅ Camera USB đã sẵn sàng (index {i}).")
-                    for i in range(0, 6) if cv2.VideoCapture(i, cv2.CAP_DSHOW).isOpened()]
-                ))
             return
         else:
+            if last_plc_status and last_camera_state == False:
+                try:
+                    last_camera_state = True
+                    data_push_2 = client.db_read(DB_NUMBER, 2, 1)
+                    snap7.util.set_bool(data_push_2, 0, 1, True)
+                    client.db_write(DB_NUMBER, 2, data_push_2)
+                except Exception as e:
+                    self.log_to_terminal(f"❌ Lỗi ghi PLC trạng thái camera: {e}")
+
             try :
                 # Resize nhỏ để tăng tốc
                 small_frame = cv2.resize(frame, (320, 240))

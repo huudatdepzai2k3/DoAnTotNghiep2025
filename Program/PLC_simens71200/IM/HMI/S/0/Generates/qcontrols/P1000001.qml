@@ -310,8 +310,8 @@ IGuiPage
 	}
 	IGuiTextField
 	{
-		id: q268435520
-		objId: 268435520
+		id: q268435519
+		objId: 268435519
 		x: 267
 		y: 122
 		width: 188
@@ -351,8 +351,8 @@ IGuiPage
 	}
 	IGuiTextField
 	{
-		id: q268435521
-		objId: 268435521
+		id: q268435520
+		objId: 268435520
 		x: 537
 		y: 123
 		width: 61
