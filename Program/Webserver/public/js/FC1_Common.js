@@ -47,6 +47,7 @@ socket.on("tag_data", function (data) {
     fn_SymbolStatus("Conveyor_1", "Conveyor", data.motor);
     fn_SymbolStatus("Conveyor_2", "Conveyor", data.motor);
     fn_SymbolStatus("Conveyor_3", "Conveyor", data.motor);
+    fn_SymbolStatus("Webcam", "Webcam", data.camera_tripped);
     fn_SymbolStatus("Motor", "Motor", data.motor);
     fn_SymbolStatus("Sensor_detech", "Sensor", data.sensor_detech);
     fn_SymbolStatus("Sensor_1", "Sensor", data.sensor_1);

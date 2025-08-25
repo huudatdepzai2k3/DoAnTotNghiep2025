@@ -62,7 +62,7 @@ const tags = [
   "state_sensor_5", "state_sensor_detech",
   "state_cylinder_1", "state_cylinder_2", "state_cylinder_3", "state_cylinder_4", "state_cylinder_5",
   "cylinder1_tripped", "cylinder2_tripped", "cylinder3_tripped", "cylinder4_tripped", "cylinder5_tripped",
-  "motor_tripped"
+  "motor_tripped","camera_tripped"
 ];
 
 const TagList = tags.reduce((tb, tag) => tb.read(tag), tagBuilder).get();
@@ -144,7 +144,7 @@ function fn_sql_insert() {
   const values = [
     tagArr[1], tagArr[2], tagArr[3], tagArr[4], tagArr[5],
     tagArr[6], tagArr[7], tagArr[8], tagArr[9], tagArr[10],
-    tagArr[11], tagArr[12], tagArr[13], tagArr[14]
+    tagArr[11], tagArr[12], tagArr[13], tagArr[14], tagArr[15]
   ];
 
   if (!arraysEqual(values, values_old)) {
@@ -152,7 +152,7 @@ function fn_sql_insert() {
       INSERT INTO plc_data (
         date_time, data_run, data_auto, data_motor,
         data_sensor_1, data_sensor_2, data_sensor_3, data_sensor_4, data_sensor_5, data_sensor_detech,
-        data_cylinder_1, data_cylinder_2, data_cylinder_3, data_cylinder_4, data_cylinder_5
+        data_cylinder_1, data_cylinder_2, data_cylinder_3, data_cylinder_4, data_cylinder_5, data_camera_tripped
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
@@ -216,7 +216,8 @@ const alarmStates = [
   { id: 3, name: "xi lanh 3 sự cố", prev: false },
   { id: 4, name: "xi lanh 4 sự cố", prev: false },
   { id: 5, name: "xi lanh 5 sự cố", prev: false },
-  { id: 6, name: "động cơ băng tải sự cố", prev: false }, 
+  { id: 6, name: "động cơ băng tải sự cố", prev: false },
+  { id: 7, name: "camera sự cố", prev: false }
 ];
 
 // /////////////////////////// HÀM QUẢN LÝ CẢNH BÁO TOÀN HỆ THỐNG ///////////////////////////
@@ -228,6 +229,7 @@ function fn_Alarm_Manage() {
     cylinder4_tripped : tagArr[18],
     cylinder5_tripped : tagArr[19],
     motor_tripped     : tagArr[20],
+    camera_tripped    : tagArr[21]
   };
 
   const tagValues = Object.values(tagalarmData);
@@ -266,7 +268,8 @@ function fn_tag() {
     cylinder_2: tagArr[11],
     cylinder_3: tagArr[12],
     cylinder_4: tagArr[13],
-    cylinder_5: tagArr[14]
+    cylinder_5: tagArr[14],
+    camera_tripped: tagArr[21]
   };
 
   io.sockets.emit("tag_data", tagData);
