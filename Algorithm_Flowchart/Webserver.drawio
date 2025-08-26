@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0" version="28.1.0" pages="10">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0" version="28.1.1" pages="10">
   <diagram name="Login" id="ZoALdYUOZf-wkssDrtV0">
     <mxGraphModel grid="0" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" background="light-dark(#FFFFFF,#FFFFFF)" math="0" shadow="0">
       <root>
@@ -3327,6 +3327,9 @@
         <mxCell id="S2kAcZy-Tb651v3h1sKZ-18" value="" style="rhombus;whiteSpace=wrap;html=1;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="80" y="252" width="140" height="83" as="geometry" />
         </mxCell>
+        <mxCell id="PQp8r9GuUMHlFwPXMy1m-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="S2kAcZy-Tb651v3h1sKZ-20" target="S2kAcZy-Tb651v3h1sKZ-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <mxCell id="S2kAcZy-Tb651v3h1sKZ-20" value="Đảo trạng thái nút dừng khẩn cấp gửi tới PLC" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="240" y="446" width="120" height="60" as="geometry" />
         </mxCell>
@@ -3389,7 +3392,7 @@
           <mxGeometry x="102.5" y="323.13" width="47" height="26" as="geometry" />
         </mxCell>
         <mxCell id="p08s7dgYM-xwtRAT9BHe-6" value="Đúng" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="102.5" y="514" width="47" height="26" as="geometry" />
+          <mxGeometry x="191.5" y="439" width="47" height="26" as="geometry" />
         </mxCell>
         <mxCell id="p08s7dgYM-xwtRAT9BHe-7" value="Đúng" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
           <mxGeometry x="526.5" y="259" width="47" height="26" as="geometry" />
@@ -3410,7 +3413,7 @@
           <mxGeometry x="210.5" y="290" width="35" height="26" as="geometry" />
         </mxCell>
         <mxCell id="p08s7dgYM-xwtRAT9BHe-15" value="Sai" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="200" y="452" width="35" height="26" as="geometry" />
+          <mxGeometry x="100" y="506" width="35" height="26" as="geometry" />
         </mxCell>
         <mxCell id="Al-4mPwVMdiAGnsMIzlf-2" value="Nhận dữ liệu response từ sever" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="106" y="282" width="89" height="30" as="geometry" />

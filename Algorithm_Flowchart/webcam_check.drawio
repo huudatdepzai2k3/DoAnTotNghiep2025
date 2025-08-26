@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0" version="28.1.0" pages="3">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0" version="28.1.1" pages="3">
   <diagram name="main" id="51mNqXNtwRhh8cBWSyJp">
     <mxGraphModel grid="0" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -362,12 +362,20 @@
           <mxGeometry x="409" y="30" width="84" height="30" as="geometry" />
         </mxCell>
         <mxCell id="htD6nvSsaef7UdnmguPJ-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontSize=13;" edge="1" parent="1" source="htD6nvSsaef7UdnmguPJ-2" target="htD6nvSsaef7UdnmguPJ-4">
-          <mxGeometry relative="1" as="geometry" />
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="644" y="178" />
+              <mxPoint x="644" y="84" />
+            </Array>
+          </mxGeometry>
         </mxCell>
         <mxCell id="htD6nvSsaef7UdnmguPJ-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fontSize=13;" edge="1" parent="1" source="htD6nvSsaef7UdnmguPJ-2" target="htD6nvSsaef7UdnmguPJ-6">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="htD6nvSsaef7UdnmguPJ-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fontSize=13;" edge="1" parent="1" source="htD6nvSsaef7UdnmguPJ-2" target="htD6nvSsaef7UdnmguPJ-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="syk1NyluPl-0BHCk7TyP-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="htD6nvSsaef7UdnmguPJ-2" target="syk1NyluPl-0BHCk7TyP-1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="htD6nvSsaef7UdnmguPJ-2" value="" style="rhombus;whiteSpace=wrap;html=1;fontSize=13;" vertex="1" parent="1">
@@ -376,8 +384,11 @@
         <mxCell id="htD6nvSsaef7UdnmguPJ-3" value="Kết nối camera thành công" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="519" y="168.5" width="65" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="htD6nvSsaef7UdnmguPJ-4" value="Gửi tín hiệu dừng hệ thống tới PLC" style="rounded=1;whiteSpace=wrap;html=1;fontSize=13;" vertex="1" parent="1">
-          <mxGeometry x="666" y="151.5" width="120" height="55" as="geometry" />
+        <mxCell id="syk1NyluPl-0BHCk7TyP-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="htD6nvSsaef7UdnmguPJ-4" target="syk1NyluPl-0BHCk7TyP-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="htD6nvSsaef7UdnmguPJ-4" value="Gửi tín hiệu kết nối camera thất bại tới PLC khi camera thay đổi so với trạng thái trước đó" style="rounded=1;whiteSpace=wrap;html=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="668" y="41" width="152.5" height="66" as="geometry" />
         </mxCell>
         <mxCell id="htD6nvSsaef7UdnmguPJ-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=13;" edge="1" parent="1" source="htD6nvSsaef7UdnmguPJ-6" target="htD6nvSsaef7UdnmguPJ-15">
           <mxGeometry relative="1" as="geometry" />
@@ -773,7 +784,7 @@
           <mxGeometry x="399" y="529.5" width="32" height="32" as="geometry" />
         </mxCell>
         <mxCell id="6FAxlQTpChweilZRbtO3-1" value="Đúng" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="496" y="219.5" width="60" height="30" as="geometry" />
+          <mxGeometry x="489" y="218.5" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="6FAxlQTpChweilZRbtO3-2" value="Đúng" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="92" y="338" width="60" height="30" as="geometry" />
@@ -807,6 +818,15 @@
         </mxCell>
         <mxCell id="6FAxlQTpChweilZRbtO3-12" value="Đúng" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="452" y="444.5" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="syk1NyluPl-0BHCk7TyP-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="syk1NyluPl-0BHCk7TyP-1" target="syk1NyluPl-0BHCk7TyP-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="syk1NyluPl-0BHCk7TyP-1" value="Gửi tín hiệu kết nối camera thành công tới PLC khi camera thay đổi so với trạng thái trước đó" style="rounded=1;whiteSpace=wrap;html=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="659" y="189" width="159" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="syk1NyluPl-0BHCk7TyP-4" value="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="718.5" y="127" width="48" height="48" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
