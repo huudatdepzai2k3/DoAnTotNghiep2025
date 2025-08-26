@@ -163,6 +163,10 @@ def send_data_to_plc_SQL(qr_code, address, tinhtrang, position):
             if snap7.util.get_bool(ready_flag, 0, 2):
                 window.log_to_terminal("⚠️ PLC chưa sẵn sàng nhận dữ liệu do hệ thống đang lỗi")
                 return
+            
+            if not snap7.util.get_bool(ready_flag, 0, 3):
+                window.log_to_terminal("⚠️ PLC chưa sẵn sàng nhận dữ liệu do hệ thống không ở chế độ tự động")
+                return
 
         if not (1 <= position <= 6):
             window.log_to_terminal(f"⚠️ Vị trí {position} không hợp lệ")
