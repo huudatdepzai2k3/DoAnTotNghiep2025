@@ -216,6 +216,11 @@ def get_position_from_file(qr_code, tinhtrang):
             window.qr_label_2.setText("📦 Tình trạng hàng: Không xác định")
             send_data_to_plc_SQL(qr_code, "Không xác định","Không xác định", 6)
             return
+        else :
+            if tinhtrang == 'hàng rách':
+                window.qr_label_2.setText("📦 Tình trạng hàng: Rách")
+            elif tinhtrang == 'bình thường':
+                window.qr_label_2.setText("📦 Tình trạng hàng: Bình thường")
 
         # Lấy địa chỉ từ file Excel
         address = str(window.data_dict[qr_code]).strip()
@@ -346,6 +351,8 @@ class DemoApp(QWidget):
         self.camera_timer = QTimer()
         self.camera_timer.timeout.connect(self.read_frame)
         self.camera_timer.start(30)  # Mỗi 30ms ~ 33 FPS
+
+        self.tinhtrang = "bình thường"  
 
         # Thiết lập giao diện
         main_layout = QHBoxLayout()
@@ -489,7 +496,6 @@ class DemoApp(QWidget):
 
     def read_frame(self):
         global last_camera_state
-        tinhtrang_send = None
 
         ret, frame = (self.capture.read() if self.capture else (False, None))
         if not ret or frame is None:
@@ -537,27 +543,39 @@ class DemoApp(QWidget):
                     self.log_to_terminal(f"❌ Lỗi ghi PLC trạng thái camera: {e}")
 
             try :
-                # Resize nhỏ để tăng tốc
-                small_frame = cv2.resize(frame, (320, 240))
+                self.current_status = "bình thường"
+                self.counter = 0
+                self.threshold = 3  
 
+                small_frame = cv2.resize(frame, (320, 320))
                 # --- YOLO detection (chạy 5 FPS = mỗi 200ms) ---
                 now = time.time()
                 if now - self.last_yolo_time > 0.2:
                     self.last_yolo_time = now
                     results = self.yolo_model.predict(small_frame, imgsz=320, conf=0.5, verbose=False)
+
+                    detected = "bình thường"
                     for r in results:
                         for box in r.boxes:
                             cls_id = int(box.cls[0])
                             conf = float(box.conf[0])
-                            label = f"{self.yolo_model.names[cls_id]} ({conf:.2f})"
 
-                            self.qr_label_2.setText(f"📦 Tình trạng hàng: {label}")
+                            if self.yolo_model.names[cls_id] == "hang_rach" and conf > 0.7:
+                                detected = "hàng rách"
+                                if conf > 0.9:
+                                    self.current_status = "hàng rách"
+                                    self.counter = 0
+                                break   
 
-                            # Lưu tình trạng YOLO
-                            if self.yolo_model.names[cls_id] == "hang_rach" and conf > 0.8:
-                                self.tinhtrang = "hang_rach"
-                            else:
-                                self.tinhtrang = "bình thường"
+                    if detected != self.current_status:
+                        self.counter += 1
+                        if self.counter >= self.threshold:
+                            self.current_status = detected
+                            self.counter = 0
+                    else:
+                        self.counter = 0
+
+                    self.tinhtrang = self.current_status
 
                 # --- QR code detection ---
                 qrcodes = decode(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), symbols=[ZBarSymbol.QRCODE])
@@ -570,21 +588,7 @@ class DemoApp(QWidget):
                             self.last_detection_time = now
                             self.qr_label.setText(f"📦 Mã QR: {data}")
                             self.pos_label.setText("📍 Vị trí: chưa biết")
-
-                            # Gán tình trạng YOLO
-                            if hasattr(self, "tinhtrang"):
-                                if self.tinhtrang == 'hang_rach':
-                                    self.qr_label_2.setText("📦 Tình trạng hàng: Rách")
-                                    tinhtrang_send = 'hàng rách'
-                                elif self.tinhtrang == 'bình thường':
-                                    self.qr_label_2.setText("📦 Tình trạng hàng: Bình thường")
-                                    tinhtrang_send = 'bình thường'
-                                else:
-                                    tinhtrang_send = 'không xác định'
-                            else:
-                                tinhtrang_send = 'không xác định'
-
-                            get_position_from_file(data, tinhtrang_send)
+                            get_position_from_file(data, self.tinhtrang)
 
                         # Vẽ khung QR
                         cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 0), 2)
