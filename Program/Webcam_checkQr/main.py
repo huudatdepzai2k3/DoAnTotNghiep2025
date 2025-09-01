@@ -283,7 +283,6 @@ class ConnectionMonitorThread(QThread):
                 try:
                     conn = pymysql.connect(**db_config)
                     if conn.open:
-                        self.last_mysql_status = True
                         window.log_to_terminal("✅ Đã kết nối lại MySQL thành công.")
                     conn.close()
                 except Exception as e:
@@ -311,9 +310,8 @@ class ConnectionMonitorThread(QThread):
             if not last_web_status:
                 window.log_to_terminal("🔄 Mất kết nối Webserver. Thử kết nối lại...")
                 if is_connected_webserver():
-                    last_web_status = True
                     window.log_to_terminal("✅ Đã kết nối lại Webserver thành công.")
-                else :
+                else:
                     window.log_to_terminal("❌ Không thể kết nối lại Webserver.")
 
             time.sleep(1)
