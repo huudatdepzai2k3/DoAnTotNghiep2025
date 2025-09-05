@@ -106,8 +106,8 @@ DoAnTotNghiep2025/
   ├── Webcam_checkQR/          # Ứng dụng giao diện PyQt5
   │   ├── main.py              # Chạy ứng dụng chính
   │   ├── best.pt              # Xử lý hình ảnh với YOLOv11
-  │   ├── File_adress.xlsx     # Chương trình
-  │   └── adress_to_position   # File cấu hình vị trí phân loại
+  │   ├── File_adress.xlsx     # File excel mẫu
+  │   └──adress_to_position.txt # File cấu hình vị trí phân loại
   ├── Webserver/               # Node.js Express server
   │   ├── index.js             # Server chính (Backend)
   │   ├── Kepware              # Thư viện kết nối Kepware
