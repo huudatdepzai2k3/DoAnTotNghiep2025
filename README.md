@@ -122,11 +122,13 @@ DoAnTotNghiep2025/
 
 
 🔧 Kết nối & Cấu hình
-Thành phần	Mô tả	Cấu hình
-📶 PLC	Siemens S7-1200	Địa chỉ IP được cấu hình trong PyQt
-🔍 Camera	USB/RTSP hỗ trợ OpenCV	Sử dụng cv2.VideoCapture()
-📊 MySQL	Lưu trạng thái thiết bị	File config.js và .env
-🧠 Yolov11	Phát hiện lỗi sản phẩm	File best.pt trong Models/
+Thành phần	    Mô tả	                       IP
+📶 Laptop      Laptop	                    192.168.0.0
+📶 PLC	      Siemens S7-1200	            192.168.0.1
+📶 HMI	      KTP-700                     192.168.0.2
+🌐 Web        Webserver                   127.0.0.1:3000
+📊 MySQL	    SQL                         127.0.0.1:3306
+
 
 📸 Giao diện ứng dụng
 PyQt5 exe : https://drive.google.com/file/d/10DWHhMFaIfd8-AVS8MkQ_WJ49J7wakEh/view?usp=sharing
