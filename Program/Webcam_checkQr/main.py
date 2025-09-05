@@ -11,7 +11,7 @@ import pymysql
 import threading
 from ultralytics import YOLO
 import snap7
-from snap7.util import set_int
+from snap7.util import set_int, set_bool
 from PyQt5.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,QLabel, QPushButton, QTextEdit, QFileDialog, QLineEdit, QLabel, QSizePolicy)
 from PyQt5.QtGui import QPixmap, QImage, QFont
@@ -314,7 +314,7 @@ class ConnectionMonitorThread(QThread):
                 else:
                     window.log_to_terminal("❌ Không thể kết nối lại Webserver.")
 
-            time.sleep(1)
+            time.sleep(2)
 
 # Lớp giao diện chính ứng dụng
 class DemoApp(QWidget):
