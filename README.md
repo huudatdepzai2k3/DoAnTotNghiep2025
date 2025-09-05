@@ -100,26 +100,29 @@ Hệ thống giúp **phân loại sản phẩm tự động** thông qua việc:
 ## 🗂️ Cấu trúc thư mục
 
 DoAnTotNghiep2025/
-├── Algorithm_Flowchart/       # Lưu đồ thuật toán thiết kế
-├──Program
-  ├── PLC/                     # Chương trình điều khiển PLC trong TIA Portal
-  ├── Webcam_checkQR/          # Ứng dụng giao diện PyQt5
-  │   ├── main.py              # Chạy ứng dụng chính
-  │   ├── best.pt              # Xử lý hình ảnh với YOLOv11
-  │   ├── File_adress.xlsx     # File excel mẫu
-  │   └──adress_to_position.txt # File cấu hình vị trí phân loại
-  ├── Webserver/               # Node.js Express server
-  │   ├── index.js             # Server chính (Backend)
-  │   ├── Kepware              # Thư viện kết nối Kepware
-  │   ├── node_module          # Thư viện sử dụng cho node của dự án
-  │   ├── public/              # Phần frontend (giao diện người dùng)
-  │   ├── views/               # Buid giao diện fontend
-  │   └──package-lock,package.json #Lưu đường dẫn, phiên bản, thông tin của thư viện
-  ├── Database/                 # Cơ sở dữ liệu MySQL
-  │   └── sql_plc.sql           # Script cấu trúc database
-  ├── Bao_Cao.docx              # Tài liệu về dự án
-  └── README.md                 # File mô tả tổng quan dự án
-
+├── Algorithm_Flowchart/   # Lưu đồ thuật toán thiết kế
+├── Program/
+│   ├── PLC/               # Chương trình điều khiển PLC trong TIA Portal
+│   ├── Webcam_checkQR/    # Ứng dụng giao diện PyQt5
+│       ├── main.py               # Chạy ứng dụng chính
+│       ├── best.pt               # Model YOLOv11 phát hiện lỗi
+│       ├── File_adress.xlsx      # File Excel mẫu
+│       └── adress_to_position.txt # File cấu hình vị trí phân loại
+│
+│   └── Webserver/             # Node.js Express server
+│       ├── index.js           # Server chính (Backend)
+│       ├── Kepware/           # Thư viện kết nối Kepware
+│       ├── node_modules/      # Thư viện Node.js
+│       ├── public/            # Frontend (giao diện người dùng)
+│       ├── views/             # Giao diện render phía server
+│       ├── package.json       # Thông tin & cấu hình thư viện
+│       └── package-lock.json  # Phiên bản cố định thư viện
+│
+├── Database/              # Cơ sở dữ liệu MySQL
+│   └── sql_plc.sql        # Script cấu trúc database
+│
+├── Bao_Cao.docx           # Tài liệu báo cáo dự án
+└── README.md              # File mô tả tổng quan dự án
 
 ## 🔧 Kết nối & Cấu hình
 Thành phần	    Mô tả	                       IP
@@ -129,16 +132,15 @@ Thành phần	    Mô tả	                       IP
 🌐 Web        Webserver                   127.0.0.1:3000
 📊 MySQL	    SQL                         127.0.0.1:3306
 
-
 ## 📸 Giao diện ứng dụng
 PyQt5 exe : https://drive.google.com/file/d/10DWHhMFaIfd8-AVS8MkQ_WJ49J7wakEh/view?usp=sharing
 
 ## 🧑‍💻 Tác giả
-  👨‍🎓 Nguyễn Hữu Đạt - Tự động hóa K66 - Đại học Mỏ - Địa chất
-  👨‍🎓 Đặng Vĩnh Hiển - Tự động hóa K66 - Đại học Mỏ - Địa chất
+  - 👨‍🎓 Nguyễn Hữu Đạt - Tự động hóa K66 - Đại học Mỏ - Địa chất
+  - 👨‍🎓 Đặng Vĩnh Hiển - Tự động hóa K66 - Đại học Mỏ - Địa chất
 
 ## 🏫 Đồ án Tốt nghiệp – Ngành Tự động hóa
-📬 Liên hệ: huudatdepzai2k3@gmail.com
-  🌟 Góp ý & Đóng góp
+- 📬 Liên hệ: huudatdepzai2k3@gmail.com
+- 🌟 Góp ý & Đóng góp
   Mọi ý tưởng, góp ý hoặc pull request đều được hoan nghênh!
   Xin chân thành cảm ơn bạn đã quan tâm và theo dõi dự án 🙏
