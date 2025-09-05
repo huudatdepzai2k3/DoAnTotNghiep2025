@@ -1,12 +1,13 @@
-# DATN2025 - Mô Hình Phân Loại Sản Phẩm Tự Động
+# DATN2025 - Design and buid a classification model using QR code for monitoring and control via Webserver
 
-Đồ án tốt nghiệp: Thiết kế mô hình điều khiển và giám sát phân loại sản phẩm theo mã QR bằng PLC S7-1200 tích hợp công nghệ thị giác máy và Webserver
+Đồ án tốt nghiệp: Thiết kế mô hình phân loại sản phẩm sử dụng mã QR code giám sát và điều khiển qua webserver
 
 ## 🧠 Mô tả hệ thống
 
 Hệ thống giúp **phân loại sản phẩm tự động** thông qua việc:
 - Quét **mã QR** trên từng sản phẩm để nhận diện.
-- Sử dụng **thị giác máy (YOLOv8)** để kiểm tra lỗi sản phẩm (OK/NG).
+- Lưu trữ phân loại liên tục tối đa 21 sản phẩm cùng lúc trên 1 băng tải
+- Sử dụng **thị giác máy (Yolov11)** để kiểm tra lỗi sản phẩm (OK/NG).
 - Dữ liệu sau khi phân tích sẽ được gửi đến **PLC Siemens S7-1200** để điều khiển hệ thống cơ khí (băng tải, xi lanh).
 - Trạng thái hệ thống được **giám sát trực tuyến** qua giao diện PyQt5 và **Webserver** (Node.js + Socket.IO).
 - **Lưu trữ và truy xuất dữ liệu** vào Cơ sở dữ liệu **MySQL** để báo cáo và thống kê.
@@ -14,7 +15,7 @@ Hệ thống giúp **phân loại sản phẩm tự động** thông qua việc:
 ## 💡 Chức năng chính
 
 - 📷 Đọc mã QR bằng camera.
-- 🤖 Nhận diện tình trạng sản phẩm (rách/lỗi) bằng YOLOv8.
+- 🤖 Nhận diện tình trạng sản phẩm (rách/lỗi) bằng Yolov11.
 - 📚 Tra cứu địa chỉ từ file Excel.
 - 🗺️ Ánh xạ vị trí từ file `.txt`.
 - 🔌 Gửi dữ liệu phân loại tới PLC S7-1200 qua Snap7.
@@ -26,22 +27,23 @@ Hệ thống giúp **phân loại sản phẩm tự động** thông qua việc:
 - Python 3
 - PyQt5
 - OpenCV & pyzbar (quét mã QR)
-- YOLOv8 (ultralytics)
+- Yolov11 (ultralytics)
 - Snap7 (giao tiếp PLC Siemens S7-1200)
 - MySQL & PyMySQL
 - pandas (xử lý Excel)
 - nodejs
+...
 
 ## 🔧 Chức năng chính
 
 ## 🖥️ PYTHON APP (PYQT5)
 
 - 📷 Kết nối Camera đọc mã QR, hiển thị hình ảnh và kết quả kiểm tra.
-- 🧠 Phân tích hình ảnh bằng YOLOv8 để xác định sản phẩm lỗi.
+- 🧠 Phân tích hình ảnh bằng Yolov11 để xác định sản phẩm lỗi.
 - 🗂️ Tra cứu thông tin sản phẩm từ file Excel và file mapping
 - 📤 Gửi dữ liệu vị trí sản phẩm cần phân loại về PLC qua S7-1200.
 - 🌐 Ghi log vào MySQL (sản phẩm, thời gian, trạng thái phân loại).
-- 📊 Hiển thị trạng thái kết nối: PLC, Webserver, MySQL
+- 📊 Hiển thị trạng thái kết nối: PLC, Webserver, MySQL và tự động kết nối lại khi mất kết nối
 - 🛢️Lưu trữ dữ liệu phân loại khi gặp sự cố kết nối
 
 ## 🌐 WEBSERVER (Node.js + Express + MySQL)
@@ -57,6 +59,19 @@ Hệ thống giúp **phân loại sản phẩm tự động** thông qua việc:
   - `POST /api/login` – Đăng nhập người dùng
   - `GET /export-excel` – Xuất dữ liệu ra Excel
   - `GET /api/chart-data` – Trả về dữ liệu vẽ biểu đồ
+  ...
+
+## 🤖 PLC (Siemens S7-1200 (ladder + SCL))
+- ⚙️ Điều khiển băng tải: Quản lý động cơ DC, tín hiệu Start/Stop và Emergency Stop.
+- 🔎 Đọc cảm biến: 6 cảm biến tiệm cận phát hiện sản phẩm tại từng vị trí.
+- 🚦 Phân loại sản phẩm: Nhận dữ liệu vị trí từ PyQt, điều khiển xi lanh khí nén đẩy sản phẩm chính xác.
+- 📦 Quản lý hàng đợi: Xử lý liên tục 21 sản phẩm theo thứ tự, tránh nhầm lẫn.
+- 📡 Truyền dữ liệu: Gửi trạng thái cảm biến, xi lanh và băng tải về Webserver/MySQL qua KepServerEX.
+- 🛑 An toàn & chế độ vận hành:
+  - Ngắt toàn bộ hệ thống khi không có sản phẩm mới trong 5 phút ở chế độ auto
+  - Auto: Lưu dữ liệu mới đọc được từ Pyqt5 điều khiển phân loại sản phẩm liên tục
+  - Manual: cho phép vận hành thử nghiệm bằng tay.
+  - Xử lí sự cố hoạt động ở từng trường hợp khác nhau
 
 ---
 
@@ -66,7 +81,7 @@ Hệ thống giúp **phân loại sản phẩm tự động** thông qua việc:
 |-------------------|---------------------------------------------------|
 | Điều khiển chính  | Siemens PLC S7-1200 + TIA Portal + KepServerEX    |
 | Xử lý mã QR       | Python + OpenCV + ZBar                            |
-| Nhận diện lỗi     | YOLOv8 (Ultralytics) + OpenCV                     |
+| Nhận diện lỗi     | Yolov11 (Ultralytics) + OpenCV                    |
 | Giao diện phần mềm| PyQt5 (Python 3.10)                               |
 | Webserver         | Node.js + Express + Socket.IO                     |
 | Cơ sở dữ liệu     | MySQL                                             |
@@ -78,48 +93,47 @@ Hệ thống giúp **phân loại sản phẩm tự động** thông qua việc:
 📁 DoAnTotNghiep2025/
 ├── 🖥️ PythonApp/ # Giao diện người dùng bằng PyQt5
 ├── 🌐 Webserver/ # Server Express + Socket.IO + MySQL
-├── 📦 Models/ # Mô hình YOLOv8 phát hiện lỗi
+├── 📦 Models/ # Mô hình Yolov11 phát hiện lỗi
 ├── 📂 Data/ # File Excel, txt mapping QR → vị trí
 └── 📄 README.md
 
 ## 🗂️ Cấu trúc thư mục
 
 DoAnTotNghiep2025/
-├── PLC/ # Chương trình điều khiển PLC trong TIA Portal
-├── PyQtApp/ # Ứng dụng giao diện PyQt5
-│ ├── main.py # Chạy ứng dụng chính
-│ ├── yolov8_utils.py # Hàm xử lý hình ảnh YOLOv8
-│ ├── plc_communication.py # Gửi dữ liệu tới PLC
-│ └── config.ini # File cấu hình IP, URL, ...
-├── Webserver/ # Node.js Express Server
-│ ├── index.js # Server chính
-│ ├── routes/ # Các API route (login, export, search,...)
-│ ├── socket/ # Socket.IO xử lý kết nối real-time
-│ ├── public/ # Giao diện frontend
-│ └── config.js # Cấu hình database
-├── Data/
-│ ├── excel_data.xlsx # Dữ liệu mã QR, thông tin sản phẩm
-│ └── mapping.txt # File ánh xạ mã QR sang vị trí PLC
-├── Database/
-│ └── sql_plc.sql # Cấu trúc cơ sở dữ liệu MySQL
-├── docs/ # Tài liệu, ảnh minh họa, sơ đồ hệ thống
-│ ├── pyqt_ui.png
-│ └── system_diagram.png
-└── README.md # File tài liệu này
+├── Algorithm_Flowchart/       # Lưu đồ thuật toán thiết kế
+├──Program
+  ├── PLC/                     # Chương trình điều khiển PLC trong TIA Portal
+  ├── Webcam_checkQR/          # Ứng dụng giao diện PyQt5
+  │   ├── main.py              # Chạy ứng dụng chính
+  │   ├── best.pt              # Xử lý hình ảnh với YOLOv11
+  │   ├── File_adress.xlsx     # Chương trình
+  │   └── adress_to_position   # File cấu hình vị trí phân loại
+  ├── Webserver/               # Node.js Express server
+  │   ├── index.js             # Server chính (Backend)
+  │   ├── Kepware              # Thư viện kết nối Kepware
+  │   ├── node_module          # Thư viện sử dụng cho node của dự án
+  │   ├── public/              # Phần frontend (giao diện người dùng)
+  │   ├── views/               # Buid giao diện fontend
+  │   └──package-lock,package.json #Lưu đường dẫn, phiên bản, thông tin của thư viện
+  ├── Database/                 # Cơ sở dữ liệu MySQL
+  │   └── sql_plc.sql           # Script cấu trúc database
+  ├── Bao_Cao.docx              # Tài liệu về dự án
+  └── README.md                 # File mô tả tổng quan dự án
+
 
 🔧 Kết nối & Cấu hình
 Thành phần	Mô tả	Cấu hình
 📶 PLC	Siemens S7-1200	Địa chỉ IP được cấu hình trong PyQt
 🔍 Camera	USB/RTSP hỗ trợ OpenCV	Sử dụng cv2.VideoCapture()
 📊 MySQL	Lưu trạng thái thiết bị	File config.js và .env
-🧠 YOLOv8	Phát hiện lỗi sản phẩm	File best.pt trong Models/
+🧠 Yolov11	Phát hiện lỗi sản phẩm	File best.pt trong Models/
 
 📸 Giao diện ứng dụng
-PyQt5 App	Web Giám sát
+PyQt5 exe : https://drive.google.com/file/d/10DWHhMFaIfd8-AVS8MkQ_WJ49J7wakEh/view?usp=sharing
 
 🧑‍💻 Tác giả
-    👨‍🎓 Nguyễn Hữu Đạt - Tự động hóa K66 - Đại học Mỏ - Địa chất
-    👨‍🎓 Đặng Vĩnh Hiển - Tự động hóa K66 - Đại học Mỏ - Địa chất
+  👨‍🎓 Nguyễn Hữu Đạt - Tự động hóa K66 - Đại học Mỏ - Địa chất
+  👨‍🎓 Đặng Vĩnh Hiển - Tự động hóa K66 - Đại học Mỏ - Địa chất
 
 🏫 Đồ án tốt nghiệp ngành Tự Động Hóa
 
