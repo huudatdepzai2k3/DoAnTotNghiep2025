@@ -130,18 +130,15 @@ Thành phần	    Mô tả	                       IP
 📊 MySQL	    SQL                         127.0.0.1:3306
 
 
-📸 Giao diện ứng dụng
+## 📸 Giao diện ứng dụng
 PyQt5 exe : https://drive.google.com/file/d/10DWHhMFaIfd8-AVS8MkQ_WJ49J7wakEh/view?usp=sharing
 
-🧑‍💻 Tác giả
+## 🧑‍💻 Tác giả
   👨‍🎓 Nguyễn Hữu Đạt - Tự động hóa K66 - Đại học Mỏ - Địa chất
   👨‍🎓 Đặng Vĩnh Hiển - Tự động hóa K66 - Đại học Mỏ - Địa chất
 
-🏫 Đồ án tốt nghiệp ngành Tự Động Hóa
-
-📬 Email: huudatdepzai2k3@gmail.com
-
-🌟 Góp ý & Đóng góp
-Mọi ý tưởng, góp ý hoặc pull request đều được hoan nghênh!
-Hãy ⭐ repo nếu bạn thấy hữu ích!
-
+## 🏫 Đồ án Tốt nghiệp – Ngành Tự động hóa
+📬 Liên hệ: huudatdepzai2k3@gmail.com
+  🌟 Góp ý & Đóng góp
+  Mọi ý tưởng, góp ý hoặc pull request đều được hoan nghênh!
+  Xin chân thành cảm ơn bạn đã quan tâm và theo dõi dự án 🙏
