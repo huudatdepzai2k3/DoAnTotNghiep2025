@@ -121,7 +121,7 @@ DoAnTotNghiep2025/
   └── README.md                 # File mô tả tổng quan dự án
 
 
-🔧 Kết nối & Cấu hình
+## 🔧 Kết nối & Cấu hình
 Thành phần	    Mô tả	                       IP
 📶 Laptop      Laptop	                    192.168.0.0
 📶 PLC	      Siemens S7-1200	            192.168.0.1
