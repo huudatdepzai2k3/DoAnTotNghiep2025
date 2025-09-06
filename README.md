@@ -121,7 +121,7 @@ DoAnTotNghiep2025/
 ├── Database/              # Cơ sở dữ liệu MySQL
 │   └── sql_plc.sql        # Script cấu trúc database
 │
-├── Bao_Cao.docx           # Tài liệu báo cáo dự án
+├── Bao_Cao.pdf            # Tài liệu báo cáo dự án
 └── README.md              # File mô tả tổng quan dự án
 
 ## 🔧 Kết nối & Cấu hình
